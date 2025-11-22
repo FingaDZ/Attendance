@@ -1,0 +1,501 @@
+import React, { useEffect, useState, useRef } from 'react';
+import api from '../api';
+import { UserPlus, Trash2, User, Camera, X, Check, RefreshCw, Edit, Eye } from 'lucide-react';
+
+const Employees = () => {
+    const [employees, setEmployees] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Modals
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showViewModal, setShowViewModal] = useState(false);
+
+    // Form State
+    const [selectedEmpId, setSelectedEmpId] = useState(null);
+    const [empName, setEmpName] = useState('');
+    const [empDept, setEmpDept] = useState('');
+    const [empPin, setEmpPin] = useState('');
+    const [selectedFiles, setSelectedFiles] = useState([null, null, null]);
+    const [currentPhotoUrls, setCurrentPhotoUrls] = useState([null, null, null]);
+    const [currentPhotoStep, setCurrentPhotoStep] = useState(0); // 0, 1, or 2 for photo 1/2/3
+
+    // Camera states
+    const [showCamera, setShowCamera] = useState(false);
+    const [stream, setStream] = useState(null);
+    const [capturedImages, setCapturedImages] = useState([null, null, null]);
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+
+    const fetchEmployees = async () => {
+        try {
+            const response = await api.get('/employees/');
+            setEmployees(response.data);
+        } catch (err) {
+            console.error("Failed to fetch employees", err);
+            setEmployees([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchEmployees();
+        return () => {
+            stopCamera();
+        };
+    }, []);
+
+    const handleFileChange = (e, photoIndex) => {
+        const newFiles = [...selectedFiles];
+        newFiles[photoIndex] = e.target.files[0];
+        setSelectedFiles(newFiles);
+        const newCaptured = [...capturedImages];
+        newCaptured[photoIndex] = null;
+        setCapturedImages(newCaptured);
+    };
+
+    const startCamera = async (photoIndex = 0) => {
+        setCurrentPhotoStep(photoIndex);
+        setShowCamera(true);
+        const newCaptured = [...capturedImages];
+        newCaptured[photoIndex] = null;
+        setCapturedImages(newCaptured);
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            setStream(mediaStream);
+            if (videoRef.current) {
+                videoRef.current.srcObject = mediaStream;
+            }
+        } catch (err) {
+            console.error("Error accessing camera:", err);
+            alert("Could not access camera");
+            setShowCamera(false);
+        }
+    };
+
+    const stopCamera = () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            setStream(null);
+        }
+    };
+
+    const takePhoto = () => {
+        if (videoRef.current && canvasRef.current) {
+            const context = canvasRef.current.getContext('2d');
+            context.drawImage(videoRef.current, 0, 0, 640, 480);
+            const dataUrl = canvasRef.current.toDataURL('image/jpeg');
+            const newCaptured = [...capturedImages];
+            newCaptured[currentPhotoStep] = dataUrl;
+            setCapturedImages(newCaptured);
+        }
+    };
+
+    const retakePhoto = () => {
+        const newCaptured = [...capturedImages];
+        newCaptured[currentPhotoStep] = null;
+        setCapturedImages(newCaptured);
+    };
+
+    const confirmPhoto = async () => {
+        if (capturedImages[currentPhotoStep]) {
+            const res = await fetch(capturedImages[currentPhotoStep]);
+            const blob = await res.blob();
+            const file = new File([blob], `webcam-capture-${currentPhotoStep + 1}.jpg`, { type: "image/jpeg" });
+            const newFiles = [...selectedFiles];
+            newFiles[currentPhotoStep] = file;
+            setSelectedFiles(newFiles);
+            stopCamera();
+            setShowCamera(false);
+
+            // Auto-start next photo if not all 3 are captured
+            if (currentPhotoStep < 2 && !selectedFiles[currentPhotoStep + 1]) {
+                setTimeout(() => startCamera(currentPhotoStep + 1), 500);
+            }
+        }
+    };
+
+    const cancelCamera = () => {
+        stopCamera();
+        setShowCamera(false);
+        const newCaptured = [...capturedImages];
+        newCaptured[currentPhotoStep] = null;
+        setCapturedImages(newCaptured);
+    };
+
+    const resetForm = () => {
+        setEmpName('');
+        setEmpDept('');
+        setEmpPin('');
+        setSelectedFiles([null, null, null]);
+        setCapturedImages([null, null, null]);
+        setCurrentPhotoStep(0);
+        setSelectedEmpId(null);
+        setCurrentPhotoUrls([null, null, null]);
+    };
+
+    const [processing, setProcessing] = useState(false);
+
+    // ... (existing code)
+
+    const handleAddSubmit = async (e) => {
+        e.preventDefault();
+        // Require all 3 photos
+        if (!selectedFiles[0] || !selectedFiles[1] || !selectedFiles[2] || !empName) {
+            alert("Please provide all 3 photos and employee name");
+            return;
+        }
+
+        setProcessing(true); // Start processing
+        const formData = new FormData();
+        formData.append('name', empName);
+        formData.append('department', empDept);
+        formData.append('pin', empPin);
+        formData.append('file1', selectedFiles[0]);
+        formData.append('file2', selectedFiles[1]);
+        formData.append('file3', selectedFiles[2]);
+
+        try {
+            await api.post('/employees/', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setShowAddModal(false);
+            resetForm();
+            fetchEmployees();
+        } catch (err) {
+            alert("Failed to add employee. " + (err.response?.data?.detail || "Error occurred."));
+        } finally {
+            setProcessing(false); // Stop processing
+        }
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        if (!empName) return;
+
+        setProcessing(true);
+        const formData = new FormData();
+        formData.append('name', empName);
+        formData.append('department', empDept);
+        formData.append('pin', empPin);
+        if (selectedFile) {
+            formData.append('file', selectedFile);
+        }
+
+        try {
+            await api.put(`/employees/${selectedEmpId}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setShowEditModal(false);
+            resetForm();
+            fetchEmployees();
+        } catch (err) {
+            alert("Failed to update employee. " + (err.response?.data?.detail || "Error occurred."));
+        } finally {
+            setProcessing(false);
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm("Are you sure?")) return;
+        try {
+            await api.delete(`/employees/${id}`);
+            fetchEmployees();
+        } catch (err) {
+            console.error("Failed to delete", err);
+        }
+    };
+
+    const openEditModal = (emp) => {
+        setSelectedEmpId(emp.id);
+        setEmpName(emp.name);
+        setEmpDept(emp.department || '');
+        setEmpPin(emp.pin || ''); // Note: PIN might not be returned by GET /employees/ for security, but if it is, use it.
+        // If PIN is not returned, user has to re-enter it if they want to keep it, or we assume empty means "don't change" (backend logic needed).
+        // For now, let's assume we just set what we have.
+        setShowEditModal(true);
+    };
+
+    const openViewModal = (emp) => {
+        setSelectedEmpId(emp.id);
+        setEmpName(emp.name);
+        setEmpDept(emp.department || '');
+        setCurrentPhotoUrl(`${api.defaults.baseURL}/employees/${emp.id}/photo`);
+        setShowViewModal(true);
+    };
+
+    return (
+        <div>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold text-gray-800">Employees</h1>
+                <button
+                    onClick={() => { resetForm(); setShowAddModal(true); }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                >
+                    <UserPlus className="w-5 h-5 mr-2" />
+                    Add Employee
+                </button>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <table className="w-full text-left text-sm text-gray-600">
+                    <thead className="bg-gray-50 text-gray-700 uppercase font-medium">
+                        <tr>
+                            <th className="px-6 py-3">ID</th>
+                            <th className="px-6 py-3">Name</th>
+                            <th className="px-6 py-3">Poste de travail</th>
+                            <th className="px-6 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                        {employees.map((emp) => (
+                            <tr key={emp.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-6 py-4">{emp.id}</td>
+                                <td className="px-6 py-4 font-medium text-gray-900 flex items-center">
+                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 mr-3 overflow-hidden">
+                                        {/* Try to load photo, fallback to icon */}
+                                        <img
+                                            src={`${api.defaults.baseURL}/employees/${emp.id}/photo`}
+                                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
+                                            className="w-full h-full object-cover"
+                                            alt=""
+                                        />
+                                        <div className="hidden w-full h-full items-center justify-center bg-gray-100">
+                                            <User size={16} />
+                                        </div>
+                                    </div>
+                                    {emp.name}
+                                </td>
+                                <td className="px-6 py-4">{emp.department}</td>
+                                <td className="px-6 py-4 text-right">
+                                    <div className="flex justify-end space-x-2">
+                                        <button onClick={() => openViewModal(emp)} className="text-gray-500 hover:text-blue-600 p-1" title="View Details">
+                                            <Eye size={18} />
+                                        </button>
+                                        <button onClick={() => openEditModal(emp)} className="text-gray-500 hover:text-green-600 p-1" title="Edit">
+                                            <Edit size={18} />
+                                        </button>
+                                        <button onClick={() => handleDelete(emp.id)} className="text-red-500 hover:text-red-700 p-1" title="Delete">
+                                            <Trash2 size={18} />
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Add/Edit Modal Form (Shared Logic) */}
+            {(showAddModal || showEditModal) && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                        <h2 className="text-xl font-bold mb-4">{showAddModal ? 'Register New Employee' : 'Edit Employee'}</h2>
+
+                        {!showCamera ? (
+                            <form onSubmit={showAddModal ? handleAddSubmit : handleEditSubmit}>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                                    <input
+                                        type="text"
+                                        value={empName}
+                                        onChange={(e) => setEmpName(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        required
+                                    />
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Poste de travail</label>
+                                    <input
+                                        type="text"
+                                        value={empDept}
+                                        onChange={(e) => setEmpDept(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                </div>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">PIN Code (4 digits)</label>
+                                    <input
+                                        type="text"
+                                        maxLength="4"
+                                        value={empPin}
+                                        onChange={(e) => setEmpPin(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder={showEditModal ? "Leave blank to keep unchanged" : "Optional"}
+                                    />
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Photos (3 required)</label>
+
+                                    <div className="grid grid-cols-3 gap-3 mb-3">
+                                        {[0, 1, 2].map((photoIndex) => (
+                                            <div key={photoIndex} className="relative">
+                                                <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
+                                                    {selectedFiles[photoIndex] ? (
+                                                        <>
+                                                            <img
+                                                                src={URL.createObjectURL(selectedFiles[photoIndex])}
+                                                                alt={`Photo ${photoIndex + 1}`}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    const newFiles = [...selectedFiles];
+                                                                    newFiles[photoIndex] = null;
+                                                                    setSelectedFiles(newFiles);
+                                                                }}
+                                                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full"
+                                                            >
+                                                                <X size={12} />
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                            <Camera size={24} />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-center mt-1 font-medium text-gray-600">
+                                                    Photo {photoIndex + 1}/3
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => startCamera(photoIndex)}
+                                                    className="w-full mt-1 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-200 transition-colors"
+                                                >
+                                                    {selectedFiles[photoIndex] ? 'Retake' : 'Capture'}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="text-xs text-gray-500 text-center">
+                                        {selectedFiles.filter(f => f).length}/3 photos captured
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end space-x-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowAddModal(false); setShowEditModal(false); resetForm(); }}
+                                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={showAddModal && (!selectedFiles[0] || !selectedFiles[1] || !selectedFiles[2])}
+                                        className={`px-4 py-2 rounded-lg text-white ${showAddModal && (!selectedFiles[0] || !selectedFiles[1] || !selectedFiles[2]) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                                    >
+                                        {showAddModal ? 'Register' : 'Update'}
+                                    </button>
+                                </div>
+                            </form>
+                        ) : (
+                            // Camera UI
+                            <div className="flex flex-col items-center">
+                                <div className="mb-3 text-center">
+                                    <p className="text-lg font-semibold text-gray-800">
+                                        Photo {currentPhotoStep + 1}/3
+                                    </p>
+                                    <p className="text-sm text-gray-500">Position your face in the circle</p>
+                                </div>
+                                <div className="relative w-full bg-black rounded-lg overflow-hidden aspect-video mb-4">
+                                    {!capturedImages[currentPhotoStep] ? (
+                                        <>
+                                            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
+                                            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                                <svg viewBox="0 0 100 100" className="w-full h-full">
+                                                    <ellipse cx="50" cy="50" rx="20" ry="25" fill="none" stroke="white" strokeWidth="0.5" strokeDasharray="2,1" opacity="0.7" />
+                                                </svg>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <img src={capturedImages[currentPhotoStep]} alt="Captured" className="w-full h-full object-contain" />
+                                    )}
+                                    <canvas ref={canvasRef} width="640" height="480" className="hidden" />
+                                </div>
+                                <div className="flex gap-4 w-full">
+                                    {!capturedImages[currentPhotoStep] ? (
+                                        <>
+                                            <button onClick={cancelCamera} className="flex-1 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg border border-gray-300">Cancel</button>
+                                            <button onClick={takePhoto} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center"><Camera className="w-5 h-5 mr-2" /> Capture</button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button onClick={retakePhoto} className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg flex items-center justify-center"><RefreshCw className="w-5 h-5 mr-2" /> Retake</button>
+                                            <button onClick={confirmPhoto} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center"><Check className="w-5 h-5 mr-2" /> Use Photo</button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* View Details Modal */}
+            {showViewModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl p-6 w-full max-w-sm">
+                        <div className="flex justify-between items-start mb-4">
+                            <h2 className="text-xl font-bold">Employee Details</h2>
+                            <button onClick={() => setShowViewModal(false)} className="text-gray-400 hover:text-gray-600">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col items-center mb-6">
+                            <div className="w-32 h-32 bg-gray-100 rounded-full overflow-hidden mb-4 border-4 border-white shadow-lg">
+                                <img
+                                    src={currentPhotoUrl}
+                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
+                                    className="w-full h-full object-cover"
+                                    alt={empName}
+                                />
+                                <div className="hidden w-full h-full items-center justify-center bg-gray-100 text-gray-400">
+                                    <User size={48} />
+                                </div>
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-800">{empName}</h3>
+                            <p className="text-gray-500">{empDept || 'No Position'}</p>
+                        </div>
+
+                        <div className="space-y-3 border-t border-gray-100 pt-4">
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">ID</span>
+                                <span className="font-medium">{selectedEmpId}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-500">PIN Code</span>
+                                <span className="font-medium">{empPin ? '****' : 'Not Set'}</span>
+                            </div>
+                        </div>
+
+                        <div className="mt-6">
+                            <button
+                                onClick={() => setShowViewModal(false)}
+                                className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Processing Overlay */}
+            {processing && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center z-[60]">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
+                    <h3 className="text-white text-xl font-semibold">Processing...</h3>
+                    <p className="text-gray-300">Analyzing face and generating embeddings.</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default Employees;

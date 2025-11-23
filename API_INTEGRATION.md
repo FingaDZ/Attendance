@@ -106,7 +106,7 @@ GET /api/attendance/
     "employee_id": 1,
     "employee_name": "John Doe",
     "camera_id": "Webcam",
-    "confidence": 0.95,
+  "confidence": 0.87,
     "type": "ENTRY",
     "worked_minutes": null,
     "timestamp": "2024-01-15T08:30:00"

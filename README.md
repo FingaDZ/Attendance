@@ -84,20 +84,43 @@ Guide for running locally or on Windows servers:
 1.  Go to the **Employees** page.
 2.  Click **"Add Employee"**.
 3.  Enter details (Name, Department, PIN).
-4.  **Capture Photos**:
-    *   **Photo 1**: Front-facing, neutral expression (Color).
-    *   **Photo 2**: Slight angle or different lighting (Auto-converted to Grayscale).
-    *   **Photo 3**: Front-facing, slight smile (Color).
+4.  **Capture Photos (Critical Step)**:
+    *   **Focus**: Position the face strictly within the guide circle.
+    *   **3 Variations**: Take 3 photos to cover different looks (e.g., with/without glasses, slight angle changes).
+    *   **Lighting**: Ensure even lighting on the face. Avoid strong backlighting or deep shadows.
+    *   **Photo 2 (B&W)**: The second photo is automatically saved in **Black & White**. This helps the AI recognize faces under different colored lighting conditions.
+    *   **Recommendation**: Use a neutral background. Avoid blurring.
 5.  Click **Save**.
+    *   *Tip: You can update photos later directly from the Employee List by clicking the Edit icon.*
 
-### 3. Taking Attendance
-*   **Face**: Simply walk in front of a connected camera. The system will log "ENTRY" or "EXIT" automatically.
-*   **PIN**: Go to the "Verify PIN" section if face recognition is unavailable.
+### 3. Taking Attendance (Live View)
+*   **Process**: The employee simply looks at the camera.
+    *   **1st Recognition**: Logs **ENTRY**.
+    *   **2nd Recognition**: Logs **EXIT**.
+*   **Feedback**: A **voice message** will confirm the action (e.g., "Welcome, [Name]" or "Goodbye, [Name]").
+*   **Security**: The system requires a high precision match (>90%). Scanned photos or phone screens may not pass verification.
 
-### 4. Viewing Reports
-1.  Go to the **Reports** page.
-2.  Filter by Date Range or Employee.
-3.  Click **Export PDF** or **Export Excel** to download records.
+### 4. Data & Reports
+*   **Logs**: All events are stored in the database.
+*   **Exports**: Download data in **Excel** or **CSV** formats from the Reports page.
+*   **Integration**: The system provides an API for integration with external HR systems or apps.
+
+---
+
+## ⚠️ Database & Maintenance
+
+**Current Database**: `SQLite`
+
+This system uses SQLite for simplicity and portability. While robust for small to medium deployments, it may experience performance degradation with extremely large datasets (millions of logs).
+
+**Recommendation**:
+To maintain optimal speed, we recommend setting up a maintenance task (Cron Job) to archive or delete logs older than **13 months**.
+
+**Example Maintenance Script (Linux):**
+```bash
+# Delete logs older than 395 days (13 months)
+sqlite3 /opt/Attendance/attendance.db "DELETE FROM logs WHERE timestamp < datetime('now', '-395 days');"
+```
 
 ---
 

@@ -1,6 +1,6 @@
 # 📸 AI Face Recognition Attendance System
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node.js](https://img.shields.io/badge/node-20.x-green)
@@ -133,9 +133,113 @@ logs = response.json()
 
 ---
 
+## 📹 Camera Setup Guide
+
+### Adding a Webcam
+1. Go to **Settings** → **Camera Management**
+2. Click **"Add Camera"**
+3. Enter:
+   - **Name**: "Webcam" (or any descriptive name)
+   - **Source**: `0` (for default webcam) or `1`, `2`, etc. for additional USB cameras
+4. Click **Save**
+5. The camera will start automatically
+
+### Adding an IP Camera (RTSP)
+1. Go to **Settings** → **Camera Management**
+2. Click **"Add Camera"**
+3. Enter:
+   - **Name**: "Entrance Camera" (or any descriptive name)
+   - **Source**: RTSP URL
+
+**RTSP URL Format Examples:**
+
+**Dahua Cameras:**
+```
+rtsp://admin:Password@192.168.1.108:554/cam/realmonitor?channel=1&subtype=0
+```
+
+**Hikvision Cameras:**
+```
+rtsp://admin:Password@192.168.1.64:554/Streaming/Channels/101
+```
+
+**Generic RTSP:**
+```
+rtsp://username:password@ip_address:port/path
+```
+
+**Tips:**
+- Replace `admin` and `Password` with your camera credentials
+- Use the camera's **main stream** for better quality
+- Test the RTSP URL with VLC Media Player first: `Media → Open Network Stream`
+- Ensure the camera is on the same network or accessible via port forwarding
+
+### Network Requirements
+- **Bandwidth**: 2-5 Mbps per camera (H.264/H.265)
+- **Latency**: < 100ms for real-time recognition
+- **Ports**: 
+  - RTSP: 554 (TCP)
+  - HTTP: 80 (for camera web interface)
+
+---
+
+## 💻 System Requirements
+
+### Minimum Server Specifications
+
+| Component | Minimum | Recommended |
+|-----------|---------|-------------|
+| **CPU** | 2 cores (2.0 GHz) | 4 cores (3.0 GHz+) |
+| **RAM** | 4 GB | 8 GB |
+| **Storage** | 20 GB SSD | 50 GB SSD |
+| **GPU** | Not required | NVIDIA GPU (CUDA) for faster processing |
+| **Network** | 100 Mbps | 1 Gbps |
+
+### Operating System
+- **Linux**: Ubuntu 22.04 LTS (recommended for production)
+- **Windows**: Windows 10/11 (for development or small deployments)
+
+### Network Configuration
+
+**Required Ports:**
+| Service | Port | Protocol | Purpose |
+|---------|------|----------|----------|
+| Backend API | 8000 | TCP | FastAPI server |
+| Frontend | 3000 | TCP | React application |
+| HTTPS (via proxy) | 443 | TCP | Secure access |
+| HTTP (via proxy) | 80 | TCP | Redirect to HTTPS |
+| SSH (Linux) | 22 | TCP | Remote management |
+
+**Firewall Rules:**
+```bash
+# Ubuntu/Linux
+sudo ufw allow 8000/tcp
+sudo ufw allow 3000/tcp
+sudo ufw allow 22/tcp
+```
+
+**Network Topology:**
+```
+[IP Cameras] ──┐
+               ├──> [Network Switch] ──> [Server] ──> [Nginx Proxy] ──> [Internet]
+[Webcams] ─────┘
+```
+
+### Performance Guidelines
+- **1-2 cameras**: 2 CPU cores, 4 GB RAM
+- **3-5 cameras**: 4 CPU cores, 8 GB RAM
+- **6+ cameras**: 6+ CPU cores, 16 GB RAM, consider GPU acceleration
+
+---
+
 ## 📦 Version History
 
-### v1.2.0 (Current)
+### v1.2.1 (Current)
+*   **Documentation**: Camera setup guide (Webcam & IP cameras with RTSP examples).
+*   **Documentation**: System requirements and network specifications.
+*   **Enhancement**: Dahua, Hikvision RTSP URL examples.
+
+### v1.2.0
 *   **Feature**: Automatic log cleanup (deletes logs older than 6 months).
 *   **Optimization**: Scheduled daily maintenance at 11:00 AM.
 *   **Documentation**: Enhanced usage guide with registration best practices.

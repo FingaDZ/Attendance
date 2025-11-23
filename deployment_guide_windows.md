@@ -51,10 +51,6 @@ cd Attendance
     pip install --upgrade pip
     pip install -r requirements.txt
     ```
-    *If `requirements.txt` is missing, install manually:*
-    ```powershell
-    pip install fastapi uvicorn sqlalchemy python-multipart insightface onnxruntime opencv-python numpy
-    ```
 
 4.  **Verify Installation**:
     ```powershell
@@ -157,3 +153,18 @@ To start the application automatically when Windows starts:
 ### InsightFace Model Download Issues
 *   On first run, the backend downloads models to `%USERPROFILE%\.insightface\models`.
 *   If it fails, download `buffalo_s.zip` manually from the InsightFace GitHub releases, extract it, and place it in that folder.
+
+---
+
+## 🔌 API Integration
+
+The system provides a REST API for external integrations. See [API_INTEGRATION.md](../API_INTEGRATION.md) for complete documentation.
+
+**Access API Documentation:**
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+**Example: Get Employees**
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8000/api/employees/" -Method Get
+```

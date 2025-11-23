@@ -86,7 +86,7 @@ source venv/bin/activate
 pip install --upgrade pip
 
 # Install Python dependencies
-pip install fastapi uvicorn sqlalchemy python-multipart insightface onnxruntime opencv-python-headless numpy
+pip install -r requirements.txt
 
 # Verify InsightFace installation
 python3 -c "import insightface; print('InsightFace OK')"
@@ -620,4 +620,19 @@ sudo crontab -e
 # 7. Configure Nginx Proxy Manager (Step 8)
 # 8. Update frontend API config (Step 9)
 # 9. Test everything (Step 11)
+```
+
+---
+
+## 🔌 API Integration
+
+The system provides a REST API for external integrations. See [API_INTEGRATION.md](../API_INTEGRATION.md) for complete documentation.
+
+**Access API Documentation:**
+- Swagger UI: `https://attendance-api.yourdomain.com/docs`
+- ReDoc: `https://attendance-api.yourdomain.com/redoc`
+
+**Example: Get Attendance Logs**
+```bash
+curl "https://attendance-api.yourdomain.com/api/attendance/?start_date=2024-01-01&end_date=2024-01-31"
 ```

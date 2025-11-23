@@ -105,6 +105,32 @@ Guide for running locally or on Windows servers:
 *   **Exports**: Download data in **Excel** or **CSV** formats from the Reports page.
 *   **Integration**: The system provides an API for integration with external HR systems or apps.
 
+### 5. API Integration
+
+The system provides a comprehensive REST API for external integrations. See **[API_INTEGRATION.md](./API_INTEGRATION.md)** for complete documentation.
+
+**Quick Example:**
+```python
+import requests
+
+# Get all employees
+response = requests.get("http://localhost:8000/api/employees/")
+employees = response.json()
+
+# Get today's attendance logs
+from datetime import date
+today = date.today().isoformat()
+response = requests.get(
+    "http://localhost:8000/api/attendance/",
+    params={"start_date": today, "end_date": today}
+)
+logs = response.json()
+```
+
+**Interactive Documentation:**
+- Swagger UI: `http://your-server:8000/docs`
+- ReDoc: `http://your-server:8000/redoc`
+
 ---
 
 ## ⚠️ Database & Maintenance

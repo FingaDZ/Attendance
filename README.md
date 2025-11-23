@@ -3,6 +3,7 @@
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Node.js](https://img.shields.io/badge/node-20.x-green)
 ![React](https://img.shields.io/badge/react-18-61dafb)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.95%2B-009688)
 

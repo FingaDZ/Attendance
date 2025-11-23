@@ -294,7 +294,7 @@ def generate_frames(camera_id: int, db_session_factory):
         display_frame = frame.copy()
         for name, bbox, conf, emp_id, kps in last_results:
             x1, y1, x2, y2 = map(int, bbox)
-            color = (0, 255, 0) if conf > 0.90 else (0, 0, 255)
+            color = (0, 255, 0) if conf > 0.87 else (0, 0, 255)
             cv2.rectangle(display_frame, (x1, y1), (x2, y2), color, 2)
             cv2.putText(display_frame, f"{name} ({conf:.2f})", (x1, y1 - 10), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)

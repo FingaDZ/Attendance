@@ -230,7 +230,7 @@ class FaceService:
             
             print(f"Detected Face. Best Match: {self.known_names[max_sim_idx]} with Score: {max_sim:.4f}")
 
-            if max_sim > 0.90:  # 90% confidence threshold
+            if max_sim > 0.87:  # 87% confidence threshold
                 name = self.known_names[max_sim_idx]
                 emp_id = self.known_ids[max_sim_idx]
                 results.append((name, face.bbox, float(max_sim), emp_id, kps))

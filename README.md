@@ -1,6 +1,6 @@
 # 📸 AI Face Recognition Attendance System
 
-![Version](https://img.shields.io/badge/version-1.2.2-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.3-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node.js](https://img.shields.io/badge/node-20.x-green)
@@ -120,7 +120,7 @@ See the deployment guides for detailed update procedures:
     *   **1st Recognition**: Logs **ENTRY**.
     *   **2nd Recognition**: Logs **EXIT**.
 *   **Feedback**: A **voice message** will confirm the action (e.g., "Welcome, [Name]" or "Goodbye, [Name]").
-*   **Security**: The system requires a high precision match (>90%). Scanned photos or phone screens may not pass verification.
+*   **Security**: The system requires a high precision match (>87%). Scanned photos or phone screens may not pass verification.
 
 ### 4. Data & Reports
 *   **Logs**: All events are stored in the database.
@@ -256,7 +256,11 @@ sudo ufw allow 22/tcp
 
 ## 📦 Version History
 
-### v1.2.2 (Current)
+### v1.2.3 (Current)
+*   **Enhancement**: Reduced face recognition threshold to 87% for improved recognition accuracy.
+*   **Optimization**: Better balance between security and usability.
+
+### v1.2.2
 *   **Documentation**: System update guide for existing installations.
 *   **Enhancement**: Quick update scripts for Ubuntu and Windows.
 *   **Documentation**: Step-by-step update procedures in deployment guides.

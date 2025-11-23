@@ -179,9 +179,10 @@ const Employees = () => {
         formData.append('name', empName);
         formData.append('department', empDept);
         formData.append('pin', empPin);
-        if (selectedFile) {
-            formData.append('file', selectedFile);
-        }
+        // Add any updated photos
+        if (selectedFiles[0]) formData.append('file1', selectedFiles[0]);
+        if (selectedFiles[1]) formData.append('file2', selectedFiles[1]);
+        if (selectedFiles[2]) formData.append('file3', selectedFiles[2]);
 
         try {
             await api.put(`/employees/${selectedEmpId}`, formData, {
@@ -221,7 +222,12 @@ const Employees = () => {
         setSelectedEmpId(emp.id);
         setEmpName(emp.name);
         setEmpDept(emp.department || '');
-        setCurrentPhotoUrl(`${api.defaults.baseURL}/employees/${emp.id}/photo`);
+        // Load all 3 photo URLs
+        setCurrentPhotoUrls([
+            `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=1`,
+            `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=2`,
+            `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=3`
+        ]);
         setShowViewModal(true);
     };
 
@@ -361,13 +367,29 @@ const Employees = () => {
                                                 <p className="text-xs text-center mt-1 font-medium text-gray-600">
                                                     Photo {photoIndex + 1}/3
                                                 </p>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => startCamera(photoIndex)}
-                                                    className="w-full mt-1 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-200 transition-colors"
-                                                >
-                                                    {selectedFiles[photoIndex] ? 'Retake' : 'Capture'}
-                                                </button>
+                                                <div className="flex gap-1 mt-1">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => startCamera(photoIndex)}
+                                                        className="flex-1 bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-200 transition-colors"
+                                                    >
+                                                        {selectedFiles[photoIndex] ? 'Retake' : 'Capture'}
+                                                    </button>
+                                                    <div className="relative flex-1">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={(e) => handleFileChange(e, photoIndex)}
+                                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                                        />
+                                                        <button
+                                                            type="button"
+                                                            className="w-full bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs hover:bg-gray-200 transition-colors pointer-events-none"
+                                                        >
+                                                            Upload
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -449,16 +471,23 @@ const Employees = () => {
                         </div>
 
                         <div className="flex flex-col items-center mb-6">
-                            <div className="w-32 h-32 bg-gray-100 rounded-full overflow-hidden mb-4 border-4 border-white shadow-lg">
-                                <img
-                                    src={currentPhotoUrl}
-                                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
-                                    className="w-full h-full object-cover"
-                                    alt={empName}
-                                />
-                                <div className="hidden w-full h-full items-center justify-center bg-gray-100 text-gray-400">
-                                    <User size={48} />
-                                </div>
+                            <div className="grid grid-cols-3 gap-2 mb-4 w-full">
+                                {[0, 1, 2].map((photoIndex) => (
+                                    <div key={photoIndex} className="relative">
+                                        <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
+                                            <img
+                                                src={currentPhotoUrls[photoIndex]}
+                                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
+                                                className="w-full h-full object-cover"
+                                                alt={`${empName} - Photo ${photoIndex + 1}`}
+                                            />
+                                            <div className="hidden w-full h-full items-center justify-center bg-gray-100 text-gray-400">
+                                                <User size={24} />
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-center mt-1 text-gray-500">Photo {photoIndex + 1}</p>
+                                    </div>
+                                ))}
                             </div>
                             <h3 className="text-2xl font-bold text-gray-800">{empName}</h3>
                             <p className="text-gray-500">{empDept || 'No Position'}</p>

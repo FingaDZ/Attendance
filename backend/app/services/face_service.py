@@ -33,21 +33,163 @@ class FaceService:
         if self.known_embeddings:
             self.known_embeddings = np.array(self.known_embeddings)
 
-    def register_face(self, image_bytes):
-        """Detect face in image and return embedding."""
-        nparr = np.frombuffer(image_bytes, np.uint8)
+    # ==================== PREPROCESSING METHODS ====================
+    
+    def align_face(self, img, landmarks):
+        """Align face by rotating to make eyes horizontal."""
+        if landmarks is None or len(landmarks) < 2:
+            return img
+        
+        # Get eye positions (landmarks[0] = left eye, landmarks[1] = right eye)
+        left_eye = landmarks[0]
+        right_eye = landmarks[1]
+        
+        # Calculate angle between eyes
+        dY = right_eye[1] - left_eye[1]
+        dX = right_eye[0] - left_eye[0]
+        angle = np.degrees(np.arctan2(dY, dX))
+        
+        # Get image center
+        h, w = img.shape[:2]
+        center = (w // 2, h // 2)
+        
+        # Rotate image
+        M = cv2.getRotationMatrix2D(center, angle, 1.0)
+        aligned = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+        
+        return aligned
+    
+    def crop_face_region(self, img, bbox, margin=0.3):
+        """Crop face region with margin."""
+        x1, y1, x2, y2 = map(int, bbox)
+        
+        # Add margin
+        w = x2 - x1
+        h = y2 - y1
+        margin_w = int(w * margin)
+        margin_h = int(h * margin)
+        
+        # Expand bbox with margin
+        x1 = max(0, x1 - margin_w)
+        y1 = max(0, y1 - margin_h)
+        x2 = min(img.shape[1], x2 + margin_w)
+        y2 = min(img.shape[0], y2 + margin_h)
+        
+        # Crop
+        cropped = img[y1:y2, x1:x2]
+        return cropped
+    
+    def resize_face(self, img, target_size=(200, 200)):
+        """Resize face to target size while maintaining aspect ratio."""
+        h, w = img.shape[:2]
+        target_w, target_h = target_size
+        
+        # Calculate scaling factor
+        scale = min(target_w / w, target_h / h)
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        
+        # Resize
+        resized = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
+        
+        # Create canvas and center the resized image
+        canvas = np.zeros((target_h, target_w, 3), dtype=np.uint8)
+        y_offset = (target_h - new_h) // 2
+        x_offset = (target_w - new_w) // 2
+        canvas[y_offset:y_offset+new_h, x_offset:x_offset+new_w] = resized
+        
+        return canvas
+    
+    def enhance_quality(self, img):
+        """Enhance image quality: gentle CLAHE only to preserve natural appearance."""
+        # Convert to LAB color space for better processing
+        lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+        l, a, b = cv2.split(lab)
+        
+        # Apply gentle CLAHE only (no histogram equalization, no aggressive processing)
+        clahe = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(8, 8))
+        l = clahe.apply(l)
+        
+        # Merge back
+        lab = cv2.merge([l, a, b])
+        enhanced = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+        
+        return enhanced
+    
+    def convert_to_grayscale(self, img):
+        """Convert image to grayscale (3-channel for consistency)."""
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # Convert back to 3-channel for InsightFace compatibility
+        gray_3ch = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+        return gray_3ch
+    
+    def normalize_colors(self, img):
+        """Light color normalization - just return original for now."""
+        # Removed aggressive normalization that was causing color distortion
+        return img
+    
+    def preprocess_face(self, img_bytes, is_grayscale=False):
+        """Complete preprocessing pipeline for face registration and recognition."""
+        # 1. Decode image
+        nparr = np.frombuffer(img_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
         
+        if img is None:
+            return None, None
+        
+        # 2. Detect face and get landmarks
         faces = self.app.get(img)
         if not faces:
-            return None
+            return None, None
         
-        # Assume the largest face is the target
-        # Sort by area (bbox width * height)
+        # Get largest face
         faces = sorted(faces, key=lambda x: (x.bbox[2]-x.bbox[0]) * (x.bbox[3]-x.bbox[1]), reverse=True)
         target_face = faces[0]
+        bbox = target_face.bbox
+        landmarks = target_face.kps  # 5 keypoints
         
-        return pickle.dumps(target_face.embedding)
+        # 3. Crop face region
+        face_img = self.crop_face_region(img, bbox, margin=0.3)
+        
+        # 4. Align eyes
+        aligned_img = self.align_face(face_img, landmarks)
+        
+        # 5. Resize to 200x200
+        resized_img = self.resize_face(aligned_img, (200, 200))
+        
+        # 6. Enhance quality
+        enhanced_img = self.enhance_quality(resized_img)
+        
+        # 7. Grayscale conversion (for photo2)
+        if is_grayscale:
+            enhanced_img = self.convert_to_grayscale(enhanced_img)
+        else:
+            # 8. Normalize colors (if not grayscale)
+            enhanced_img = self.normalize_colors(enhanced_img)
+        
+        # 9. Generate embedding from preprocessed image
+        processed_faces = self.app.get(enhanced_img)
+        if not processed_faces:
+            # Fallback: use original face embedding
+            embedding = target_face.embedding
+        else:
+            embedding = processed_faces[0].embedding
+        
+        # Return preprocessed image bytes and embedding
+        _, img_encoded = cv2.imencode('.jpg', enhanced_img)
+        processed_bytes = img_encoded.tobytes()
+        
+        return processed_bytes, pickle.dumps(embedding)
+
+    def register_face(self, image_bytes, is_grayscale=False):
+        """Detect face in image, preprocess, and return embedding + processed image."""
+        # Use the complete preprocessing pipeline
+        processed_bytes, embedding_pickle = self.preprocess_face(image_bytes, is_grayscale)
+        
+        if processed_bytes is None or embedding_pickle is None:
+            return None, None
+        
+        return processed_bytes, embedding_pickle
 
     def recognize_faces(self, frame):
         """

@@ -34,7 +34,7 @@ async def create_employee(
     photos = []
     embeddings = []
     
-    # Process all 3 photos
+    # Process all 3 photos (photo2 will be grayscale)
     for i, file in enumerate([file1, file2, file3], 1):
         content = await file.read()
         
@@ -43,13 +43,14 @@ async def create_employee(
         if not is_good:
             raise HTTPException(status_code=400, detail=f"Photo {i} quality check failed: {msg}")
 
-        embedding_pickle = face_service.register_face(content)
+        # Mark photo2 (index 1) as grayscale
+        is_grayscale = (i == 2)
         
-        if embedding_pickle is None:
+        # Use new preprocessing pipeline
+        processed_content, embedding_pickle = face_service.register_face(content, is_grayscale=is_grayscale)
+        
+        if processed_content is None or embedding_pickle is None:
             raise HTTPException(status_code=400, detail=f"No face detected in photo {i}")
-
-        # Process image (Grayscale background)
-        processed_content = face_service.process_profile_image(content)
         
         photos.append(processed_content)
         embeddings.append(embedding_pickle)
@@ -104,12 +105,13 @@ async def update_employee(
             if not is_good:
                 raise HTTPException(status_code=400, detail=f"Photo {i} quality check failed: {msg}")
             
-            embedding_pickle = face_service.register_face(content)
-            if embedding_pickle is None:
+            # Mark photo2 as grayscale
+            is_grayscale = (i == 2)
+            
+            # Use new preprocessing pipeline
+            processed_content, embedding_pickle = face_service.register_face(content, is_grayscale=is_grayscale)
+            if processed_content is None or embedding_pickle is None:
                 raise HTTPException(status_code=400, detail=f"No face detected in photo {i}")
-                
-            # Process image
-            processed_content = face_service.process_profile_image(content)
                 
             # Update specific photo and embedding
             setattr(emp, f'embedding{i}', embedding_pickle)

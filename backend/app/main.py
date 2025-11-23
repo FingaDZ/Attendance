@@ -6,6 +6,13 @@ from .models import Camera
 from .services.face_service import face_service
 from .services.camera_service import camera_service
 from .models import Employee
+from .cron_cleanup import cleanup_old_logs
+from apscheduler.schedulers.background import BackgroundScheduler
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -22,6 +29,9 @@ app.add_middleware(
 )
 
 app.include_router(api.router, prefix="/api")
+
+# Initialize scheduler
+scheduler = BackgroundScheduler()
 
 @app.on_event("startup")
 def startup_event():
@@ -40,10 +50,21 @@ def startup_event():
         )
         db.add(default_cam)
         db.commit()
-        print("Added default RTSP camera.")
+        logger.info("Added default webcam.")
     
     camera_service.initialize_cameras_from_db()
     db.close()
+    
+    # Start automatic log cleanup scheduler
+    # Runs daily at 2:00 AM
+    scheduler.add_job(cleanup_old_logs, 'cron', hour=2, minute=0)
+    scheduler.start()
+    logger.info("Log cleanup scheduler started (runs daily at 02:00)")
+
+@app.on_event("shutdown")
+def shutdown_event():
+    scheduler.shutdown()
+    logger.info("Scheduler shut down")
 
 @app.get("/")
 def read_root():

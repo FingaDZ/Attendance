@@ -1,6 +1,6 @@
 # 📸 AI Face Recognition Attendance System
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node.js](https://img.shields.io/badge/node-20.x-green)
@@ -126,7 +126,12 @@ sqlite3 /opt/Attendance/attendance.db "DELETE FROM logs WHERE timestamp < dateti
 
 ## 📦 Version History
 
-### v1.1.0 (Current)
+### v1.2.0 (Current)
+*   **Feature**: Automatic log cleanup (deletes logs older than 6 months).
+*   **Optimization**: Scheduled daily maintenance at 2:00 AM.
+*   **Documentation**: Enhanced usage guide with registration best practices.
+
+### v1.1.0
 *   **UI/UX**: Full Responsive Design (Mobile/Tablet support).
 *   **Feature**: Mobile Drawer Navigation & Adaptive Grids.
 *   **Fix**: Corrected camera aspect ratio distortion during registration.

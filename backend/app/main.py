@@ -56,10 +56,10 @@ def startup_event():
     db.close()
     
     # Start automatic log cleanup scheduler
-    # Runs daily at 2:00 AM
-    scheduler.add_job(cleanup_old_logs, 'cron', hour=2, minute=0)
+    # Runs daily at 11:00 AM
+    scheduler.add_job(cleanup_old_logs, 'cron', hour=11, minute=0)
     scheduler.start()
-    logger.info("Log cleanup scheduler started (runs daily at 02:00)")
+    logger.info("Log cleanup scheduler started (runs daily at 11:00)")
 
 @app.on_event("shutdown")
 def shutdown_event():

@@ -133,29 +133,14 @@ logs = response.json()
 
 ---
 
-## ⚠️ Database & Maintenance
-
-**Current Database**: `SQLite`
-
-This system uses SQLite for simplicity and portability. While robust for small to medium deployments, it may experience performance degradation with extremely large datasets (millions of logs).
-
-**Recommendation**:
-To maintain optimal speed, we recommend setting up a maintenance task (Cron Job) to archive or delete logs older than **13 months**.
-
-**Example Maintenance Script (Linux):**
-```bash
-# Delete logs older than 395 days (13 months)
-sqlite3 /opt/Attendance/attendance.db "DELETE FROM logs WHERE timestamp < datetime('now', '-395 days');"
-```
-
----
-
 ## 📦 Version History
 
 ### v1.2.0 (Current)
 *   **Feature**: Automatic log cleanup (deletes logs older than 6 months).
-*   **Optimization**: Scheduled daily maintenance at 2:00 AM.
+*   **Optimization**: Scheduled daily maintenance at 11:00 AM.
 *   **Documentation**: Enhanced usage guide with registration best practices.
+*   **API**: Comprehensive REST API documentation with 15+ endpoints.
+*   **Integration**: Examples in Python, JavaScript, cURL, and PowerShell.
 
 ### v1.1.0
 *   **UI/UX**: Full Responsive Design (Mobile/Tablet support).

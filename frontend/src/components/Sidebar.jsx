@@ -61,7 +61,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                     })}
                 </nav>
                 <div className="p-4 text-xs text-gray-600 text-center">
-                    v1.2.1
+                    v1.2.2
                 </div>
             </div>
         </>

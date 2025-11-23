@@ -156,6 +156,111 @@ To start the application automatically when Windows starts:
 
 ---
 
+## 🔄 Updating an Existing Installation
+
+If you already have the Attendance system installed and want to update to the latest version:
+
+### Step 1: Backup Current Installation
+
+```powershell
+# Backup database
+Copy-Item attendance.db -Destination "attendance.db.backup.$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+
+# Optional: Backup entire folder
+Compress-Archive -Path . -DestinationPath "..\attendance_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').zip"
+```
+
+### Step 2: Stop Running Services
+
+If you have the application running, stop it:
+- Close all terminal windows running the backend/frontend
+- Or press `Ctrl+C` in each terminal
+
+### Step 3: Update Code
+
+```powershell
+# Navigate to project directory
+cd C:\path\to\Attendance
+
+# Stash any local changes (if any)
+git stash
+
+# Pull latest code
+git pull origin master
+
+# If you had local changes, reapply them
+# git stash pop
+```
+
+### Step 4: Update Backend Dependencies
+
+```powershell
+cd backend
+.\venv\Scripts\activate
+
+# Update dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+deactivate
+```
+
+### Step 5: Update Frontend Dependencies
+
+```powershell
+cd ..\frontend
+
+# Update dependencies (optional, only if package.json changed)
+npm install
+
+# Rebuild production build
+npm run build
+```
+
+### Step 6: Restart Application
+
+Run your application as usual:
+- Use `run_app.bat` if you created it
+- Or manually start backend and frontend in separate terminals
+
+### Quick Update Script
+
+Create a file `update_attendance.bat` in the root folder:
+
+```batch
+@echo off
+echo === Attendance System Update ===
+
+echo Backing up database...
+copy attendance.db attendance.db.backup.%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%%time:~6,2%
+
+echo Pulling latest code...
+git pull origin master
+
+echo Updating backend...
+cd backend
+call venv\Scripts\activate
+pip install --upgrade pip
+pip install -r requirements.txt
+call deactivate
+
+echo Updating frontend...
+cd ..\frontend
+call npm install
+call npm run build
+
+echo === Update Complete ===
+echo You can now run the application with run_app.bat
+pause
+```
+
+Run updates:
+```powershell
+.\update_attendance.bat
+```
+
+---
+
 ## 🔌 API Integration
 
 The system provides a REST API for external integrations. See [API_INTEGRATION.md](../API_INTEGRATION.md) for complete documentation.

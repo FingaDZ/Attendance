@@ -444,6 +444,163 @@ npm run build
 sudo systemctl restart attendance-backend attendance-frontend
 ```
 
+---
+
+## 🔄 Updating an Existing Installation
+
+If you already have Attendance installed in `/opt/Attendance` and want to update to the latest version:
+
+### Step 1: Backup Current Installation
+
+```bash
+# Backup database
+cp /opt/Attendance/attendance.db /opt/Attendance/attendance.db.backup.$(date +%Y%m%d_%H%M%S)
+
+# Optional: Backup entire installation
+tar -czf /opt/attendance_backup_$(date +%Y%m%d_%H%M%S).tar.gz /opt/Attendance
+```
+
+### Step 2: Stop Services
+
+```bash
+sudo systemctl stop attendance-backend
+sudo systemctl stop attendance-frontend
+```
+
+### Step 3: Update Code
+
+```bash
+cd /opt/Attendance
+
+# Stash any local changes (if any)
+git stash
+
+# Pull latest code
+git pull origin master
+
+# If you had local changes, reapply them
+# git stash pop
+```
+
+### Step 4: Update Backend Dependencies
+
+```bash
+cd /opt/Attendance/backend
+source venv/bin/activate
+
+# Update dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+deactivate
+```
+
+### Step 5: Update Frontend Dependencies
+
+```bash
+cd /opt/Attendance/frontend
+
+# Update dependencies (optional, only if package.json changed)
+npm install
+
+# Rebuild production build
+npm run build
+```
+
+### Step 6: Apply Database Migrations (if any)
+
+```bash
+# Currently, the system uses SQLite with automatic schema creation
+# No manual migrations needed unless specified in release notes
+```
+
+### Step 7: Restart Services
+
+```bash
+sudo systemctl start attendance-backend
+sudo systemctl start attendance-frontend
+
+# Check status
+sudo systemctl status attendance-backend
+sudo systemctl status attendance-frontend
+```
+
+### Step 8: Verify Update
+
+```bash
+# Check backend API
+curl http://localhost:8000/api/employees/
+
+# Check frontend
+curl http://localhost:3000
+
+# Check logs for errors
+sudo journalctl -u attendance-backend -n 50
+sudo journalctl -u attendance-frontend -n 50
+```
+
+### Quick Update Script
+
+Create a file `/opt/update_attendance.sh`:
+
+```bash
+#!/bin/bash
+set -e
+
+echo "=== Attendance System Update ==="
+
+# Backup database
+echo "Backing up database..."
+cp /opt/Attendance/attendance.db /opt/Attendance/attendance.db.backup.$(date +%Y%m%d_%H%M%S)
+
+# Stop services
+echo "Stopping services..."
+sudo systemctl stop attendance-backend attendance-frontend
+
+# Update code
+echo "Pulling latest code..."
+cd /opt/Attendance
+git pull origin master
+
+# Update backend
+echo "Updating backend dependencies..."
+cd backend
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+deactivate
+
+# Update frontend
+echo "Rebuilding frontend..."
+cd ../frontend
+npm install
+npm run build
+
+# Restart services
+echo "Restarting services..."
+sudo systemctl start attendance-backend attendance-frontend
+
+# Check status
+echo "Checking service status..."
+sudo systemctl status attendance-backend --no-pager
+sudo systemctl status attendance-frontend --no-pager
+
+echo "=== Update Complete ==="
+echo "Check logs: sudo journalctl -u attendance-backend -f"
+```
+
+Make it executable:
+```bash
+sudo chmod +x /opt/update_attendance.sh
+```
+
+Run updates:
+```bash
+sudo /opt/update_attendance.sh
+```
+
+---
+
 ### Check Service Status
 ```bash
 # All services

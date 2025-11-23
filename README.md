@@ -1,6 +1,6 @@
 # 📸 AI Face Recognition Attendance System
 
-![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.2.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node.js](https://img.shields.io/badge/node-20.x-green)
@@ -71,6 +71,28 @@ Guide for running locally or on Windows servers:
 *   Prerequisites (Visual Studio Build Tools)
 *   PowerShell installation scripts
 *   Production & Development modes
+
+---
+
+## 🔄 Updating the System
+
+If you already have Attendance installed and want to update to the latest version:
+
+### Ubuntu/Linux
+```bash
+cd /opt/Attendance
+sudo /opt/update_attendance.sh
+```
+
+### Windows
+```powershell
+cd C:\path\to\Attendance
+.\update_attendance.bat
+```
+
+See the deployment guides for detailed update procedures:
+- [Ubuntu Update Guide](./deployment_guide.md#-updating-an-existing-installation)
+- [Windows Update Guide](./deployment_guide_windows.md#-updating-an-existing-installation)
 
 ---
 
@@ -234,7 +256,12 @@ sudo ufw allow 22/tcp
 
 ## 📦 Version History
 
-### v1.2.1 (Current)
+### v1.2.2 (Current)
+*   **Documentation**: System update guide for existing installations.
+*   **Enhancement**: Quick update scripts for Ubuntu and Windows.
+*   **Documentation**: Step-by-step update procedures in deployment guides.
+
+### v1.2.1
 *   **Documentation**: Camera setup guide (Webcam & IP cameras with RTSP examples).
 *   **Documentation**: System requirements and network specifications.
 *   **Enhancement**: Dahua, Hikvision RTSP URL examples.

@@ -83,9 +83,16 @@ const Employees = () => {
 
     const takePhoto = () => {
         if (videoRef.current && canvasRef.current) {
-            const context = canvasRef.current.getContext('2d');
-            context.drawImage(videoRef.current, 0, 0, 640, 480);
-            const dataUrl = canvasRef.current.toDataURL('image/jpeg');
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+
+            // Match canvas size to video stream to prevent distortion
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg');
             const newCaptured = [...capturedImages];
             newCaptured[currentPhotoStep] = dataUrl;
             setCapturedImages(newCaptured);
@@ -235,6 +242,7 @@ const Employees = () => {
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Employees</h1>
+                {/* Responsive table wrapper added */}
                 <button
                     onClick={() => { resetForm(); setShowAddModal(true); }}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
@@ -245,52 +253,54 @@ const Employees = () => {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <table className="w-full text-left text-sm text-gray-600">
-                    <thead className="bg-gray-50 text-gray-700 uppercase font-medium">
-                        <tr>
-                            <th className="px-6 py-3">ID</th>
-                            <th className="px-6 py-3">Name</th>
-                            <th className="px-6 py-3">Poste de travail</th>
-                            <th className="px-6 py-3 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                        {employees.map((emp) => (
-                            <tr key={emp.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4">{emp.id}</td>
-                                <td className="px-6 py-4 font-medium text-gray-900 flex items-center">
-                                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 mr-3 overflow-hidden">
-                                        {/* Try to load photo, fallback to icon */}
-                                        <img
-                                            src={`${api.defaults.baseURL}/employees/${emp.id}/photo`}
-                                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
-                                            className="w-full h-full object-cover"
-                                            alt=""
-                                        />
-                                        <div className="hidden w-full h-full items-center justify-center bg-gray-100">
-                                            <User size={16} />
-                                        </div>
-                                    </div>
-                                    {emp.name}
-                                </td>
-                                <td className="px-6 py-4">{emp.department}</td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex justify-end space-x-2">
-                                        <button onClick={() => openViewModal(emp)} className="text-gray-500 hover:text-blue-600 p-1" title="View Details">
-                                            <Eye size={18} />
-                                        </button>
-                                        <button onClick={() => openEditModal(emp)} className="text-gray-500 hover:text-green-600 p-1" title="Edit">
-                                            <Edit size={18} />
-                                        </button>
-                                        <button onClick={() => handleDelete(emp.id)} className="text-red-500 hover:text-red-700 p-1" title="Delete">
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </td>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-gray-600">
+                        <thead className="bg-gray-50 text-gray-700 uppercase font-medium">
+                            <tr>
+                                <th className="px-6 py-3">ID</th>
+                                <th className="px-6 py-3">Name</th>
+                                <th className="px-6 py-3">Poste de travail</th>
+                                <th className="px-6 py-3 text-right">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {employees.map((emp) => (
+                                <tr key={emp.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-6 py-4">{emp.id}</td>
+                                    <td className="px-6 py-4 font-medium text-gray-900 flex items-center">
+                                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 mr-3 overflow-hidden">
+                                            {/* Try to load photo, fallback to icon */}
+                                            <img
+                                                src={`${api.defaults.baseURL}/employees/${emp.id}/photo`}
+                                                onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
+                                                className="w-full h-full object-cover"
+                                                alt=""
+                                            />
+                                            <div className="hidden w-full h-full items-center justify-center bg-gray-100">
+                                                <User size={16} />
+                                            </div>
+                                        </div>
+                                        {emp.name}
+                                    </td>
+                                    <td className="px-6 py-4">{emp.department}</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex justify-end space-x-2">
+                                            <button onClick={() => openViewModal(emp)} className="text-gray-500 hover:text-blue-600 p-1" title="View Details">
+                                                <Eye size={18} />
+                                            </button>
+                                            <button onClick={() => openEditModal(emp)} className="text-gray-500 hover:text-green-600 p-1" title="Edit">
+                                                <Edit size={18} />
+                                            </button>
+                                            <button onClick={() => handleDelete(emp.id)} className="text-red-500 hover:text-red-700 p-1" title="Delete">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Add/Edit Modal Form (Shared Logic) */}
@@ -431,7 +441,7 @@ const Employees = () => {
                                             <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
                                             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                                                 <svg viewBox="0 0 100 100" className="w-full h-full">
-                                                    <ellipse cx="50" cy="50" rx="20" ry="25" fill="none" stroke="white" strokeWidth="0.5" strokeDasharray="2,1" opacity="0.7" />
+                                                    <ellipse cx="50" cy="50" rx="21" ry="28" fill="none" stroke="white" strokeWidth="0.5" strokeDasharray="2,1" opacity="0.7" />
                                                 </svg>
                                             </div>
                                         </>

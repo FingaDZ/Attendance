@@ -219,7 +219,7 @@ const LiveView = () => {
             )}
 
             {/* Video Container */}
-            <div className="relative bg-black rounded-xl overflow-hidden shadow-2xl" style={{ maxWidth: '100%', aspectRatio: '16/9' }}>
+            <div className="relative bg-black rounded-xl overflow-hidden shadow-2xl w-full h-[75vh] md:h-auto md:aspect-video">
                 {selectedCamera.source === '0' ? (
                     <>
                         <video
@@ -243,7 +243,7 @@ const LiveView = () => {
                 <div className="absolute inset-0 pointer-events-none">
                     {/* Oval Positioning Guide - Responsive */}
                     <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                        <div className="border-4 border-white border-opacity-40 rounded-full" style={{ width: 'min(70vw, 448px)', height: 'min(85vh, 560px)' }}></div>
+                        <div className="border-4 border-white border-opacity-40 rounded-full w-[60vw] h-[40vh] md:w-[min(70vw,448px)] md:h-[min(85vh,560px)]"></div>
                     </div>
 
                     {/* Recognition Status Overlay */}

@@ -33,7 +33,27 @@ class FaceService:
         if self.known_embeddings:
             self.known_embeddings = np.array(self.known_embeddings)
 
+        if self.known_embeddings:
+            self.known_embeddings = np.array(self.known_embeddings)
+
     # ==================== PREPROCESSING METHODS ====================
+
+    def normalize_image(self, img, max_dim=1280):
+        """
+        Resize image if it exceeds max_dim, maintaining aspect ratio.
+        This ensures consistent input size for both high-res photos and video frames.
+        """
+        if img is None:
+            return None
+            
+        h, w = img.shape[:2]
+        if max(h, w) <= max_dim:
+            return img
+            
+        scale = max_dim / max(h, w)
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        return cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
     
     def align_face(self, img, landmarks):
         """Align face by rotating to make eyes horizontal."""
@@ -122,26 +142,6 @@ class FaceService:
         # Convert back to 3-channel for InsightFace compatibility
         gray_3ch = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         return gray_3ch
-    
-    def normalize_colors(self, img):
-        """Light color normalization - just return original for now."""
-        # Removed aggressive normalization that was causing color distortion
-        return img
-    
-    def preprocess_face(self, img_bytes, is_grayscale=False):
-        """Complete preprocessing pipeline for face registration and recognition."""
-        # 1. Decode image
-        nparr = np.frombuffer(img_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        if img is None:
-            return None, None
-        
-        # 2. Detect face and get landmarks
-        faces = self.app.get(img)
-        if not faces:
-            return None, None
-        
         # Get largest face
         faces = sorted(faces, key=lambda x: (x.bbox[2]-x.bbox[0]) * (x.bbox[3]-x.bbox[1]), reverse=True)
         target_face = faces[0]
@@ -196,6 +196,9 @@ class FaceService:
         Detect and recognize faces in a frame.
         Returns list of (name, bbox, confidence, employee_id, landmarks)
         """
+        # Normalize input frame
+        frame = self.normalize_image(frame)
+        
         faces = self.app.get(frame)
         results = []
 

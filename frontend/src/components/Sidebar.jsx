@@ -60,8 +60,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                         );
                     })}
                 </nav>
-                <div className="p-4 text-xs text-gray-600 text-center">
-                    v1.3.0
+                <div className="p-4 border-t border-gray-800 text-xs text-gray-500 flex justify-between">
+                    <span>v1.4.0</span>
+                    <span>© 2024</span>
                 </div>
             </div>
         </>

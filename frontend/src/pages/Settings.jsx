@@ -5,6 +5,9 @@ import { Plus, Trash2, Camera, Power, CheckCircle } from 'lucide-react';
 const Settings = () => {
     const [wanDomain, setWanDomain] = useState('');
     const [loadingWan, setLoadingWan] = useState(false);
+    const [cameras, setCameras] = useState([]);
+    const [newCamName, setNewCamName] = useState('');
+    const [newCamSource, setNewCamSource] = useState('');
 
     const fetchCameras = async () => {
         try {

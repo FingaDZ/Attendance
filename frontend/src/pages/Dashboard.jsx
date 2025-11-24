@@ -59,10 +59,13 @@ const Dashboard = () => {
                 api.get('/employees/')
             ]);
 
-            setLogs(logsRes.data);
-            setFilteredLogs(logsRes.data);
-            setEmployees(employeesRes.data);
-            calculateStats(logsRes.data, employeesRes.data);
+            const logsData = Array.isArray(logsRes.data) ? logsRes.data : [];
+            const employeesData = Array.isArray(employeesRes.data) ? employeesRes.data : [];
+
+            setLogs(logsData);
+            setFilteredLogs(logsData);
+            setEmployees(employeesData);
+            calculateStats(logsData, employeesData);
         } catch (err) {
             console.error("Failed to fetch data", err);
         } finally {

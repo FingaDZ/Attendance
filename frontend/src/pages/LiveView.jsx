@@ -270,6 +270,12 @@ const LiveView = () => {
                     />
                 )}
 
+                {/* Landmark Overlay Canvas */}
+                <canvas
+                    ref={overlayCanvasRef}
+                    className="absolute inset-0 w-full h-full pointer-events-none"
+                />
+
                 {/* Overlay */}
                 <div className="absolute inset-0 pointer-events-none">
                     {/* Oval Positioning Guide - Responsive */}

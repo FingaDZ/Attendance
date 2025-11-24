@@ -98,6 +98,7 @@ You have two options: running in development mode (easier for testing) or produc
     .\venv\Scripts\activate
     python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     ```
+    > **Note**: The first run will download the `buffalo_l` model (~400MB). This may take a few minutes.
 
 2.  **Start Frontend**:
     Open a second terminal:

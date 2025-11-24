@@ -147,8 +147,8 @@ const LiveView = () => {
                             const { name, confidence, timestamp, landmarks } = response.data;
                             setLastDetection({ name, confidence, timestamp });
 
-                            // Log attendance if confidence > 0.87 AND name is not Unknown
-                            if (confidence > 0.87 && name !== "Unknown") {
+                            // Log attendance if confidence > 0.90 AND name is not Unknown
+                            if (confidence > 0.90 && name !== "Unknown") {
                                 const logRes = await api.post(`/log_attendance/?employee_id=${response.data.employee_id}&camera_id=Webcam&confidence=${confidence}`);
                                 if (logRes.data.status === 'logged') {
                                     playAttendanceSound(logRes.data.type);
@@ -199,7 +199,7 @@ const LiveView = () => {
             return { color: '#FFA500', text: 'Position your face in the circle', verified: false, positioning: true }; // Orange
         }
 
-        if (conf < 0.87) {
+        if (conf < 0.90) {
             return { color: '#FF0000', text: `Precision: ${(conf * 100).toFixed(0)}%`, verified: false, positioning: false }; // Red
         } else {
             return { color: '#00FF00', text: `Precision: ${(conf * 100).toFixed(0)}%`, verified: true, name: result.name, positioning: false }; // Green

@@ -60,9 +60,14 @@ const Sidebar = ({ isOpen, onClose }) => {
                         );
                     })}
                 </nav>
-                <div className="p-4 border-t border-gray-800 text-xs text-gray-500 flex justify-between">
-                    <span>v1.4.0</span>
-                    <span>© 2024</span>
+                <div className="p-4 border-t border-gray-800 text-xs text-gray-500 flex flex-col items-center space-y-1">
+                    <div className="flex justify-between w-full">
+                        <span>v1.5.0</span>
+                        <span>© 2024</span>
+                    </div>
+                    <div className="text-blue-400 font-semibold tracking-wider pt-2 opacity-80">
+                        Powered by AIRBAND
+                    </div>
                 </div>
             </div>
         </>

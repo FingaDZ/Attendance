@@ -1,6 +1,6 @@
 # 📸 AI Face Recognition Attendance System
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node.js](https://img.shields.io/badge/node-20.x-green)
@@ -262,23 +262,6 @@ sudo ufw allow 22/tcp
 ### v1.2.0
 *   **Feature**: Automatic log cleanup (deletes logs older than 6 months).
 *   **Optimization**: Scheduled daily maintenance at 11:00 AM.
-*   **Documentation**: Enhanced usage guide with registration best practices.
-*   **API**: Comprehensive REST API documentation with 15+ endpoints.
-*   **Integration**: Examples in Python, JavaScript, cURL, and PowerShell.
-
-### v1.1.0
-*   **UI/UX**: Full Responsive Design (Mobile/Tablet support).
-*   **Feature**: Mobile Drawer Navigation & Adaptive Grids.
-*   **Fix**: Corrected camera aspect ratio distortion during registration.
-*   **Optimization**: Improved face positioning guides for mobile & desktop.
-
-### v1.0.0
-*   **Core**: Initial release with InsightFace integration.
-*   **Feature**: Multi-photo registration (3 photos).
-*   **Optimization**: Advanced preprocessing pipeline (Align, Crop, Resize, CLAHE).
-*   **Optimization**: Grayscale processing for lighting invariance.
-*   **UI**: Modern React Dashboard with Dark Mode support.
-*   **Deployment**: Added Systemd and Windows deployment support.
 
 ---
 

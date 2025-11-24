@@ -1,6 +1,6 @@
 # 📸 AI Face Recognition Attendance System
 
-![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.5.2-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node.js](https://img.shields.io/badge/node-20.x-green)
@@ -120,7 +120,7 @@ See the deployment guides for detailed update procedures:
     *   **1st Recognition**: Logs **ENTRY**.
     *   **2nd Recognition**: Logs **EXIT**.
 *   **Feedback**: A **voice message** will confirm the action (e.g., "Welcome, [Name]" or "Goodbye, [Name]").
-*   **Security**: The system requires a high precision match (>87%). Scanned photos or phone screens may not pass verification.
+*   **Security**: The system requires a high precision match (>85%). Scanned photos or phone screens may not pass verification.
 
 ### 4. Data & Reports
 *   **Logs**: All events are stored in the database.

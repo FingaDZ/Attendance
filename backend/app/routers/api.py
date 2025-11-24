@@ -195,12 +195,16 @@ async def recognize_face(file: UploadFile = File(...)):
         # Get the first (best) result
         name, bbox, conf, emp_id, kps = results[0]
         
+        # Calculate Liveness Score (v1.6.0)
+        liveness_score = face_service.calculate_liveness_score(img, bbox)
+        
         # Get server timestamp
         server_time = datetime.datetime.now().strftime("%H:%M:%S")
         
         return {
             "name": name,
             "confidence": float(conf),
+            "liveness_score": liveness_score,
             "employee_id": emp_id,
             "timestamp": server_time,
             "landmarks": kps.tolist() if kps is not None else []
@@ -295,10 +299,24 @@ def generate_frames(camera_id: int, db_session_factory):
         display_frame = frame.copy()
         for name, bbox, conf, emp_id, kps in last_results:
             x1, y1, x2, y2 = map(int, bbox)
-            color = (0, 255, 0) if conf > 0.87 else (0, 0, 255)
+            
+            # Calculate liveness score (v1.6.0)
+            liveness_score = face_service.calculate_liveness_score(frame, bbox)
+            is_real = liveness_score > 0.5
+            
+            # Color: Green if real and high confidence, Red if spoof or low confidence
+            color = (0, 255, 0) if (conf > 0.85 and is_real) else (0, 0, 255)
             cv2.rectangle(display_frame, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(display_frame, f"{name} ({conf:.2f})", (x1, y1 - 10), 
+            
+            # Display name, confidence, and liveness
+            cv2.putText(display_frame, f"{name} ({conf:.2f})", (x1, y1 - 30), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            
+            # Liveness indicator
+            liveness_text = f"Real ({liveness_score:.2f})" if is_real else f"Spoof ({liveness_score:.2f})"
+            liveness_color = (0, 255, 0) if is_real else (0, 0, 255)
+            cv2.putText(display_frame, liveness_text, (x1, y1 - 10), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, liveness_color, 2)
             
             # Draw landmarks if available
             if kps is not None:

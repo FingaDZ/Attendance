@@ -1,6 +1,6 @@
 # 📸 AI Face Recognition Attendance System
 
-![Version](https://img.shields.io/badge/version-1.5.2-blue.svg)
+![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node.js](https://img.shields.io/badge/node-20.x-green)
@@ -258,6 +258,11 @@ sudo ufw allow 22/tcp
 
 *   **Documentation**: System requirements and network specifications.
 *   **Enhancement**: Dahua, Hikvision RTSP URL examples.
+
+### v1.6.0 (Latest)
+*   **Feature**: Liveness Detection (Anti-Spoofing) - Passive analysis to detect photo/screen attacks.
+*   **Security**: Real-time texture and color analysis to prevent fraudulent attendance.
+*   **UI**: Live video stream now displays "Real" vs "Spoof" status.
 
 ### v1.5.2 (Stable)
 *   **Fix**: Corrected recognition threshold to 85% (Frontend & Backend).

@@ -329,6 +329,14 @@ const LiveView = () => {
                             {selectedCamera.source === '0' ? 'Client-Side' : 'Server-Side'}
                         </span>
                     </div>
+                    <div>
+                        <span className="text-gray-500">Liveness Detection:</span>
+                        <span className="ml-2 font-medium text-green-600">✓ Enabled (Passive)</span>
+                    </div>
+                    <div>
+                        <span className="text-gray-500">Anti-Spoofing:</span>
+                        <span className="ml-2 font-medium text-blue-600">Active</span>
+                    </div>
                 </div>
             </div>
         </div>

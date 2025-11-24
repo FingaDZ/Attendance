@@ -33,6 +33,59 @@ class FaceService:
         if self.known_embeddings:
             self.known_embeddings = np.array(self.known_embeddings)
 
+    # ==================== LIVENESS DETECTION (v1.6.0) ====================
+
+    def calculate_liveness_score(self, img, bbox):
+        """
+        Calculate a liveness score (0.0 to 1.0) based on passive image analysis.
+        Checks for:
+        1. Sharpness (Blur detection) - Screens/prints are often blurry or have moiré.
+        2. Color Distribution - Real faces have rich color variance.
+        3. Exposure - Screens are often overexposed (self-luminous).
+        """
+        x1, y1, x2, y2 = map(int, bbox)
+        
+        # Ensure bbox is within image
+        h, w = img.shape[:2]
+        x1 = max(0, x1); y1 = max(0, y1)
+        x2 = min(w, x2); y2 = min(h, y2)
+        
+        face_img = img[y1:y2, x1:x2]
+        if face_img.size == 0:
+            return 0.0
+
+        # 1. Sharpness (Laplacian Variance)
+        gray = cv2.cvtColor(face_img, cv2.COLOR_BGR2GRAY)
+        sharpness = cv2.Laplacian(gray, cv2.CV_64F).var()
+        
+        # Normalize sharpness (heuristic: >100 is good, <50 is bad)
+        score_sharpness = min(1.0, sharpness / 200.0)
+        
+        # 2. Color Analysis (HSV)
+        hsv = cv2.cvtColor(face_img, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
+        
+        # Check for "flat" colors (typical of prints)
+        std_h = np.std(h)
+        std_s = np.std(s)
+        
+        # Real faces usually have some color variation
+        score_color = min(1.0, (std_h + std_s) / 40.0)
+        
+        # 3. Exposure (V channel)
+        mean_v = np.mean(v)
+        # Penalize extreme overexposure (screen glare) or underexposure
+        if mean_v > 230 or mean_v < 30:
+            score_exposure = 0.5
+        else:
+            score_exposure = 1.0
+
+        # Weighted Average
+        # Sharpness is most important for detecting blur/screens
+        final_score = (score_sharpness * 0.5) + (score_color * 0.3) + (score_exposure * 0.2)
+        
+        return float(min(1.0, max(0.0, final_score)))
+
     # ==================== PREPROCESSING METHODS ====================
 
     def normalize_image(self, img, max_dim=1280):

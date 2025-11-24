@@ -314,8 +314,24 @@ const LiveView = () => {
                     )}
                 </div>
             </div>
+
+            {/* Info Panel */}
+            <div className="mt-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <h3 className="font-semibold text-gray-800 mb-2">Recognition Info</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span className="text-gray-500">Confidence Threshold:</span>
+                        <span className="ml-2 font-medium text-gray-800">85%</span>
+                    </div>
+                    <div>
+                        <span className="text-gray-500">Recognition Mode:</span>
+                        <span className="ml-2 font-medium text-gray-800">
+                            {selectedCamera.source === '0' ? 'Client-Side' : 'Server-Side'}
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
-        </div >
     );
 };
 

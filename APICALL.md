@@ -1,9 +1,18 @@
-# API Documentation - Attendance System v1.6.5
+# API Documentation - Attendance System v1.6.6
 
 ## Base URL
+
+### LAN Access (Internal Network)
 ```
 http://192.168.20.56:8000/api
 ```
+
+### External Access
+```
+https://hgq09k0j9p1.sn.mynetname.net/api
+```
+
+**Note**: The system is configured to accept connections from all networks.
 
 ## Employee Management
 

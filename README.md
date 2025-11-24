@@ -1,6 +1,6 @@
 # 📸 AI Face Recognition Attendance System
 
-![Version](https://img.shields.io/badge/version-1.6.5-blue.svg)
+![Version](https://img.shields.io/badge/version-1.6.6-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node.js](https://img.shields.io/badge/node-20.x-green)
@@ -252,20 +252,6 @@ sudo ufw allow 22/tcp
 - **3-5 cameras**: 4 CPU cores, 8 GB RAM
 - **6+ cameras**: 6+ CPU cores, 16 GB RAM, consider GPU acceleration
 
----
-
-## 📦 Version History
-
-*   **Documentation**: System requirements and network specifications.
-*   **Enhancement**: Dahua, Hikvision RTSP URL examples.
-
-### v1.6.5 (Latest)
-*   **Feature**: 6-Photo Registration - Increased from 3 to 6 photos per employee for better recognition accuracy.
-*   **Improvement**: Better coverage of different angles (front, left, right, tilt) for robust matching.
-*   **Adjustment**: Reduced liveness detection sensitivity (0.5 → 0.4) for fewer false positives.
-*   **Migration**: Auto-duplicates existing employee photos for backward compatibility.
-
-### v1.6.0
 *   **Feature**: Liveness Detection (Anti-Spoofing) - Passive analysis to detect photo/screen attacks.
 *   **Security**: Real-time texture and color analysis to prevent fraudulent attendance.
 *   **UI**: Live video stream now displays "Real" vs "Spoof" status.

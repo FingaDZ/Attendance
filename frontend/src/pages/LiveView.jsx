@@ -102,7 +102,11 @@ const LiveView = () => {
             startRecognitionLoop();
         } catch (err) {
             console.error("Error accessing camera:", err);
-            alert("Could not access camera. Ensure permissions are granted.");
+            if (window.isSecureContext === false) {
+                alert("Camera access requires a Secure Context (HTTPS or localhost). On LAN (HTTP), you must enable 'Insecure origins treated as secure' in chrome://flags.");
+            } else {
+                alert("Could not access camera. Ensure permissions are granted and no other app is using it.");
+            }
         }
     };
 

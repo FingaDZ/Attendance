@@ -1,17 +1,7 @@
 ---
-![Version](https://img.shields.io/badge/version-1.6.14-blue.svg)
+![Version](https://img.shields.io/badge/version-1.6.15-blue.svg)
 
 ## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Changelog
-
-### v1.6.14 (2025-11-24)
-- **Architecture**: Unified frontend and backend serving. The backend now serves the frontend static files directly.
-- **Fix**: Resolved CORS and Proxy issues on LAN/WAN by serving everything from the same port (8000).
-
-### v1.6.13 (2025-11-24)
 - **Fix**: Restored missing state variables in Settings page causing "newCamName is not defined" error.
 - **Fix**: Added robust data safety checks in Dashboard to prevent "filter is not a function" white screen errors on LAN.
 

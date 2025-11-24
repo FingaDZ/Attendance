@@ -15,14 +15,17 @@ class FaceService:
         self.known_ids = []
 
     def load_embeddings(self, db_employees):
-        """Load all 3 embeddings from database into memory for fast lookup."""
+        """Load all 6 embeddings from database into memory for fast lookup."""
         self.known_embeddings = []
         self.known_names = []
         self.known_ids = []
         
         for emp in db_employees:
-            # Load all 3 embeddings for each employee
-            for i, emb_field in enumerate([emp.embedding1, emp.embedding2, emp.embedding3], 1):
+            # Load all 6 embeddings for each employee (v1.6.5: increased from 3)
+            for i, emb_field in enumerate([
+                emp.embedding1, emp.embedding2, emp.embedding3,
+                emp.embedding4, emp.embedding5, emp.embedding6
+            ], 1):
                 if emb_field:
                     emb = pickle.loads(emb_field)
                     self.known_embeddings.append(emb)

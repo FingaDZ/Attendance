@@ -9,14 +9,20 @@ class Employee(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     department = Column(String, nullable=True)
-    # Storing 3 embeddings as bytes (pickle or numpy tobytes) for better accuracy
+    # Storing 6 embeddings as bytes (pickle or numpy tobytes) for better accuracy
     embedding1 = Column(LargeBinary, nullable=True)
     embedding2 = Column(LargeBinary, nullable=True)
     embedding3 = Column(LargeBinary, nullable=True)
-    # Store 3 actual images for display
+    embedding4 = Column(LargeBinary, nullable=True) # v1.6.5
+    embedding5 = Column(LargeBinary, nullable=True) # v1.6.5
+    embedding6 = Column(LargeBinary, nullable=True) # v1.6.5
+    # Store 6 actual images for display
     photo1 = Column(LargeBinary, nullable=True)
     photo2 = Column(LargeBinary, nullable=True)
     photo3 = Column(LargeBinary, nullable=True)
+    photo4 = Column(LargeBinary, nullable=True) # v1.6.5: Additional angle (left rotation)
+    photo5 = Column(LargeBinary, nullable=True) # v1.6.5: Additional angle (right rotation)
+    photo6 = Column(LargeBinary, nullable=True) # v1.6.5: Additional angle (tilt)
     pin = Column(String, nullable=True) # 4-digit PIN
     created_at = Column(DateTime(timezone=False), default=datetime.datetime.now)
 

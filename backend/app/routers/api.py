@@ -28,14 +28,17 @@ async def create_employee(
     file1: UploadFile = File(...),
     file2: UploadFile = File(...),
     file3: UploadFile = File(...),
+    file4: UploadFile = File(...),  # v1.6.5
+    file5: UploadFile = File(...),  # v1.6.5
+    file6: UploadFile = File(...),  # v1.6.5
     db: Session = Depends(get_db)
 ):
-    """Create employee with 3 photos for better recognition accuracy"""
+    """Create employee with 6 photos for better recognition accuracy (v1.6.5: increased from 3)"""
     photos = []
     embeddings = []
     
-    # Process all 3 photos (photo2 will be grayscale)
-    for i, file in enumerate([file1, file2, file3], 1):
+    # Process all 6 photos (photo2 will be grayscale)
+    for i, file in enumerate([file1, file2, file3, file4, file5, file6], 1):
         content = await file.read()
         
         # Check quality first
@@ -61,10 +64,16 @@ async def create_employee(
         embedding1=embeddings[0],
         embedding2=embeddings[1],
         embedding3=embeddings[2],
+        embedding4=embeddings[3],  # v1.6.5
+        embedding5=embeddings[4],  # v1.6.5
+        embedding6=embeddings[5],  # v1.6.5
         pin=pin, 
         photo1=photos[0],
         photo2=photos[1],
-        photo3=photos[2]
+        photo3=photos[2],
+        photo4=photos[3],  # v1.6.5
+        photo5=photos[4],  # v1.6.5
+        photo6=photos[5]   # v1.6.5
     )
     db.add(new_emp)
     db.commit()
@@ -85,9 +94,12 @@ async def update_employee(
     file1: UploadFile = File(None),
     file2: UploadFile = File(None),
     file3: UploadFile = File(None),
+    file4: UploadFile = File(None),  # v1.6.5
+    file5: UploadFile = File(None),  # v1.6.5
+    file6: UploadFile = File(None),  # v1.6.5
     db: Session = Depends(get_db)
 ):
-    """Update employee - can update individual photos or all 3"""
+    """Update employee - can update individual photos or all 6 (v1.6.5: increased from 3)"""
     emp = db.query(Employee).filter(Employee.id == emp_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -97,7 +109,7 @@ async def update_employee(
     emp.pin = pin
     
     # Update photos if provided
-    files = [file1, file2, file3]
+    files = [file1, file2, file3, file4, file5, file6]
     for i, file in enumerate(files, 1):
         if file:
             content = await file.read()
@@ -302,7 +314,7 @@ def generate_frames(camera_id: int, db_session_factory):
             
             # Calculate liveness score (v1.6.0)
             liveness_score = face_service.calculate_liveness_score(frame, bbox)
-            is_real = liveness_score > 0.5
+            is_real = liveness_score > 0.4  # v1.6.5: Reduced from 0.5 for less sensitivity
             
             # Color: Green if real and high confidence, Red if spoof or low confidence
             color = (0, 255, 0) if (conf > 0.85 and is_real) else (0, 0, 255)

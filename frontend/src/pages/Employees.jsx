@@ -16,14 +16,14 @@ const Employees = () => {
     const [empName, setEmpName] = useState('');
     const [empDept, setEmpDept] = useState('');
     const [empPin, setEmpPin] = useState('');
-    const [selectedFiles, setSelectedFiles] = useState([null, null, null]);
-    const [currentPhotoUrls, setCurrentPhotoUrls] = useState([null, null, null]);
-    const [currentPhotoStep, setCurrentPhotoStep] = useState(0); // 0, 1, or 2 for photo 1/2/3
+    const [selectedFiles, setSelectedFiles] = useState([null, null, null, null, null, null]); // v1.6.5: 6 photos
+    const [currentPhotoUrls, setCurrentPhotoUrls] = useState([null, null, null, null, null, null]); // v1.6.5
+    const [currentPhotoStep, setCurrentPhotoStep] = useState(0); // 0-5 for photo 1-6 (v1.6.5)
 
     // Camera states
     const [showCamera, setShowCamera] = useState(false);
     const [stream, setStream] = useState(null);
-    const [capturedImages, setCapturedImages] = useState([null, null, null]);
+    const [capturedImages, setCapturedImages] = useState([null, null, null, null, null, null]); // v1.6.5
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const overlayCanvasRef = useRef(null); // New overlay canvas
@@ -233,11 +233,11 @@ const Employees = () => {
         setEmpName('');
         setEmpDept('');
         setEmpPin('');
-        setSelectedFiles([null, null, null]);
-        setCapturedImages([null, null, null]);
+        setSelectedFiles([null, null, null, null, null, null]); // v1.6.5
+        setCapturedImages([null, null, null, null, null, null]); // v1.6.5
         setCurrentPhotoStep(0);
         setSelectedEmpId(null);
-        setCurrentPhotoUrls([null, null, null]);
+        setCurrentPhotoUrls([null, null, null, null, null, null]); // v1.6.5
     };
 
     const [processing, setProcessing] = useState(false);
@@ -246,9 +246,10 @@ const Employees = () => {
 
     const handleAddSubmit = async (e) => {
         e.preventDefault();
-        // Require all 3 photos
-        if (!selectedFiles[0] || !selectedFiles[1] || !selectedFiles[2] || !empName) {
-            alert("Please provide all 3 photos and employee name");
+        // Require all 6 photos (v1.6.5)
+        if (!selectedFiles[0] || !selectedFiles[1] || !selectedFiles[2] ||
+            !selectedFiles[3] || !selectedFiles[4] || !selectedFiles[5] || !empName) {
+            alert("Please provide all 6 photos and employee name");
             return;
         }
 
@@ -260,6 +261,9 @@ const Employees = () => {
         formData.append('file1', selectedFiles[0]);
         formData.append('file2', selectedFiles[1]);
         formData.append('file3', selectedFiles[2]);
+        formData.append('file4', selectedFiles[3]); // v1.6.5
+        formData.append('file5', selectedFiles[4]); // v1.6.5
+        formData.append('file6', selectedFiles[5]); // v1.6.5
 
         try {
             await api.post('/employees/', formData, {
@@ -288,6 +292,9 @@ const Employees = () => {
         if (selectedFiles[0]) formData.append('file1', selectedFiles[0]);
         if (selectedFiles[1]) formData.append('file2', selectedFiles[1]);
         if (selectedFiles[2]) formData.append('file3', selectedFiles[2]);
+        if (selectedFiles[3]) formData.append('file4', selectedFiles[3]); // v1.6.5
+        if (selectedFiles[4]) formData.append('file5', selectedFiles[4]); // v1.6.5
+        if (selectedFiles[5]) formData.append('file6', selectedFiles[5]); // v1.6.5
 
         try {
             await api.put(`/employees/${selectedEmpId}`, formData, {

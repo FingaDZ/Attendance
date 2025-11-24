@@ -259,6 +259,27 @@ sudo ufw allow 22/tcp
 *   **Documentation**: System requirements and network specifications.
 *   **Enhancement**: Dahua, Hikvision RTSP URL examples.
 
+### v1.5.2 (Stable)
+*   **Fix**: Corrected recognition threshold to 85% (Frontend & Backend).
+*   **UI**: Updated Live View overlay to reflect 85% minimum.
+*   **UI**: Reduced landmark visibility (subtle dots).
+
+### v1.5.1 (Stable)
+*   **Fix**: Resolved 502 Bad Gateway error caused by missing method in `face_service.py`.
+*   **Fix**: Fixed 500 Internal Server Error on photo updates.
+*   **Stability**: Reverted experimental liveness detection features to ensure system stability.
+
+### v1.5.0
+*   **Feature**: Enhanced photo capture flow.
+*   **Feature**: Improved face recognition precision (90% threshold).
+*   **UI**: Updated branding and layout.
+
+### v1.4.0
+*   **Feature**: Adaptive image quality handling.
+
+### v1.3.0
+*   **Feature**: InsightFace Buffalo_L model integration.
+
 ### v1.2.0
 *   **Feature**: Automatic log cleanup (deletes logs older than 6 months).
 *   **Optimization**: Scheduled daily maintenance at 11:00 AM.

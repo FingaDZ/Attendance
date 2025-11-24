@@ -265,7 +265,7 @@ class FaceService:
             
             print(f"Detected Face. Best Match: {self.known_names[max_sim_idx]} with Score: {max_sim:.4f}")
 
-            if max_sim > 0.90:  # 90% confidence threshold
+            if max_sim > 0.85:  # 85% confidence threshold
                 name = self.known_names[max_sim_idx]
                 emp_id = self.known_ids[max_sim_idx]
                 results.append((name, face.bbox, float(max_sim), emp_id, kps))
@@ -330,19 +330,6 @@ class FaceService:
         Returns processed image bytes.
         """
         nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        faces = self.app.get(img)
-        if not faces:
-            return image_bytes # Return original if no face found
-            
-        # Use the largest face
-        faces = sorted(faces, key=lambda x: (x.bbox[2]-x.bbox[0]) * (x.bbox[3]-x.bbox[1]), reverse=True)
-        face = faces[0]
-        
-        # Create mask
-        mask = np.zeros(img.shape[:2], dtype=np.uint8)
-        
         # Calculate circle parameters
         x1, y1, x2, y2 = map(int, face.bbox)
         center_x = (x1 + x2) // 2

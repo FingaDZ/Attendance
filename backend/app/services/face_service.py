@@ -33,9 +33,6 @@ class FaceService:
         if self.known_embeddings:
             self.known_embeddings = np.array(self.known_embeddings)
 
-        if self.known_embeddings:
-            self.known_embeddings = np.array(self.known_embeddings)
-
     # ==================== PREPROCESSING METHODS ====================
 
     def normalize_image(self, img, max_dim=1280):
@@ -142,6 +139,36 @@ class FaceService:
         # Convert back to 3-channel for InsightFace compatibility
         gray_3ch = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
         return gray_3ch
+
+    def normalize_colors(self, img):
+        """Normalize colors (simple histogram equalization for V channel in HSV)."""
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
+        v = cv2.equalizeHist(v)
+        hsv = cv2.merge([h, s, v])
+        return cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+
+    def preprocess_face(self, image_bytes, is_grayscale=False):
+        """
+        Preprocess face for registration:
+        1. Detect face
+        2. Crop with margin
+        3. Align eyes
+        4. Resize to standard size
+        5. Enhance quality
+        6. Convert to grayscale (if requested) or normalize
+        7. Generate embedding
+        """
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        
+        # Normalize large images first
+        img = self.normalize_image(img)
+        
+        faces = self.app.get(img)
+        if not faces:
+            return None, None
+            
         # Get largest face
         faces = sorted(faces, key=lambda x: (x.bbox[2]-x.bbox[0]) * (x.bbox[3]-x.bbox[1]), reverse=True)
         target_face = faces[0]
@@ -236,8 +263,6 @@ class FaceService:
             max_sim_idx = np.argmax(sims)
             max_sim = sims[max_sim_idx]
             
-            print(f"Detected Face. Best Match: {self.known_names[max_sim_idx]} with Score: {max_sim:.4f}")
-
             print(f"Detected Face. Best Match: {self.known_names[max_sim_idx]} with Score: {max_sim:.4f}")
 
             if max_sim > 0.90:  # 90% confidence threshold

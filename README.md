@@ -1,6 +1,6 @@
 # 📸 AI Face Recognition Attendance System
 
-![Version](https://img.shields.io/badge/version-1.2.3-blue.svg)
+![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Node.js](https://img.shields.io/badge/node-20.x-green)
@@ -256,7 +256,12 @@ sudo ufw allow 22/tcp
 
 ## 📦 Version History
 
-### v1.2.3 (Current)
+### v1.3.0 (Current)
+*   **Major Upgrade**: Switched to **InsightFace Buffalo_L** model for superior accuracy.
+*   **Enhancement**: Enabled 106-point facial landmark detection (eyes, mouth, nose contours).
+*   **Performance**: Improved detection of small faces and difficult angles.
+
+### v1.2.3
 *   **Enhancement**: Reduced face recognition threshold to 87% for improved recognition accuracy.
 *   **Optimization**: Better balance between security and usability.
 

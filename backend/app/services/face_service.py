@@ -8,7 +8,7 @@ class FaceService:
     def __init__(self):
         # Initialize InsightFace
         # providers=['CUDAExecutionProvider', 'CPUExecutionProvider'] if GPU available
-        self.app = FaceAnalysis(name='buffalo_s', providers=['CPUExecutionProvider'])
+        self.app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
         self.app.prepare(ctx_id=0, det_size=(640, 640))
         self.known_embeddings = []
         self.known_names = []

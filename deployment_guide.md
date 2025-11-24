@@ -231,18 +231,6 @@ sudo systemctl enable attendance-frontend
 sudo systemctl start attendance-frontend
 
 # Check status
-sudo systemctl status attendance-frontend
-```
-
-> **Note on Backend Logs:**
-> You noticed logs like `Downloading /root/.insightface/models/buffalo_s.zip`.
-> **This is normal!** The backend is downloading the face recognition models on the first start. It may take a few minutes.
-> Wait until you see `Application startup complete` or similar before testing.
-
----
-
-## Step 7: Configure Firewall
-
 ```bash
 # Allow backend port (8000)
 sudo ufw allow 8000/tcp

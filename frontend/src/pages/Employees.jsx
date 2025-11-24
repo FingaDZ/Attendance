@@ -334,11 +334,15 @@ const Employees = () => {
         setSelectedEmpId(emp.id);
         setEmpName(emp.name);
         setEmpDept(emp.department || '');
-        // Load all 3 photo URLs
+        setEmpPin(emp.pin || '');
+        // Load all 6 photo URLs (v1.6.5)
         setCurrentPhotoUrls([
             `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=1`,
             `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=2`,
-            `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=3`
+            `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=3`,
+            `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=4`,
+            `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=5`,
+            `${api.defaults.baseURL}/employees/${emp.id}/photo?photo_num=6`
         ]);
         setShowViewModal(true);
     };
@@ -619,7 +623,7 @@ const Employees = () => {
 
                         <div className="flex flex-col items-center mb-6">
                             <div className="grid grid-cols-3 gap-2 mb-4 w-full">
-                                {[0, 1, 2].map((photoIndex) => (
+                                {[0, 1, 2, 3, 4, 5].map((photoIndex) => (
                                     <div key={photoIndex} className="relative">
                                         <div className="w-full h-24 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
                                             <img

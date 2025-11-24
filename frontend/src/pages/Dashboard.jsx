@@ -216,25 +216,6 @@ const Dashboard = () => {
                                     fetchData();
                                 } catch (err) {
                                     console.error('Failed to delete all logs', err);
-                                }
-                            }
-                        }}
-                        className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors shadow-sm"
-                    >
-                        <Trash2 className="w-4 h-4 mr-2" /> Clear
-                    </button>
-                    <button
-                        onClick={() => setShowPinModal(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors shadow-sm"
-                    >
-                        <Lock className="w-4 h-4 mr-2" /> PIN
-                    </button>
-                </div>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-gray-500 text-sm font-medium">Total Employees</h3>
                         <UserCheck className="text-blue-500 w-6 h-6" />

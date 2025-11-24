@@ -26,6 +26,9 @@ const Employees = () => {
     const [capturedImages, setCapturedImages] = useState([null, null, null]);
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
+    const overlayCanvasRef = useRef(null); // New overlay canvas
+    const [faceDetected, setFaceDetected] = useState(false); // Validation state
+    const [currentResults, setCurrentResults] = useState([]); // For landmarks
 
     const fetchEmployees = async () => {
         try {
@@ -45,6 +48,35 @@ const Employees = () => {
             stopCamera();
         };
     }, []);
+
+    // Draw landmarks
+    useEffect(() => {
+        const canvas = overlayCanvasRef.current;
+        const video = videoRef.current;
+        if (!canvas || !video || currentResults.length === 0) {
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            return;
+        }
+
+        const result = currentResults[0];
+        if (!result.landmarks || result.landmarks.length === 0) return;
+
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw landmarks
+        ctx.fillStyle = '#00FFFF'; // Cyan
+        result.landmarks.forEach(([x, y]) => {
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, 2 * Math.PI);
+            ctx.fill();
+        });
+    }, [currentResults]);
 
     const handleFileChange = (e, photoIndex) => {
         const newFiles = [...selectedFiles];
@@ -67,6 +99,7 @@ const Employees = () => {
             if (videoRef.current) {
                 videoRef.current.srcObject = mediaStream;
             }
+            startRecognitionLoop(); // Start detecting faces
         } catch (err) {
             console.error("Error accessing camera:", err);
             alert("Could not access camera");
@@ -74,11 +107,67 @@ const Employees = () => {
         }
     };
 
+    // Recognition Loop for Landmarks & Validation
+    const startRecognitionLoop = () => {
+        let isProcessing = false;
+        const interval = setInterval(async () => {
+            if (isProcessing) return;
+            if (videoRef.current && canvasRef.current && !videoRef.current.paused && !videoRef.current.ended) {
+                isProcessing = true;
+
+                // Use a temporary canvas for capture to avoid messing with the main one? 
+                // Actually we can reuse canvasRef but we need to be careful not to draw over it if it's used for display.
+                // In this component, canvasRef is hidden (className="hidden"), so it's safe to use for processing.
+
+                const context = canvasRef.current.getContext('2d');
+                canvasRef.current.width = videoRef.current.videoWidth;
+                canvasRef.current.height = videoRef.current.videoHeight;
+                context.drawImage(videoRef.current, 0, 0);
+
+                canvasRef.current.toBlob(async (blob) => {
+                    if (!blob) { isProcessing = false; return; }
+                    const formData = new FormData();
+                    formData.append('file', blob, 'capture.jpg');
+
+                    try {
+                        const response = await api.post('/recognize/', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+
+                        if (response.data && response.data.name) {
+                            setFaceDetected(true);
+                            setCurrentResults([{
+                                landmarks: response.data.landmarks || []
+                            }]);
+                        } else {
+                            setFaceDetected(false);
+                            setCurrentResults([]);
+                        }
+                    } catch (err) {
+                        setFaceDetected(false);
+                    } finally {
+                        isProcessing = false;
+                    }
+                }, 'image/jpeg', 0.8);
+            }
+        }, 500); // Check every 500ms
+
+        // Store interval ID on the video element or a ref to clear it later?
+        // Since we don't have a ref for the interval, we'll attach it to the videoRef.current for now or use a separate ref.
+        // Better: use a ref.
+        videoRef.current._recognitionInterval = interval;
+    };
+
     const stopCamera = () => {
+        if (videoRef.current && videoRef.current._recognitionInterval) {
+            clearInterval(videoRef.current._recognitionInterval);
+        }
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
             setStream(null);
         }
+        setFaceDetected(false);
+        setCurrentResults([]);
     };
 
     const takePhoto = () => {
@@ -91,7 +180,16 @@ const Employees = () => {
             canvas.height = video.videoHeight;
 
             const context = canvas.getContext('2d');
+
+            // Apply B&W filter for Photo 2 (Index 1)
+            if (currentPhotoStep === 1) {
+                context.filter = 'grayscale(100%)';
+            } else {
+                context.filter = 'none';
+            }
+
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            context.filter = 'none'; // Reset filter
             const dataUrl = canvas.toDataURL('image/jpeg');
             const newCaptured = [...capturedImages];
             newCaptured[currentPhotoStep] = dataUrl;
@@ -431,17 +529,42 @@ const Employees = () => {
                             <div className="flex flex-col items-center">
                                 <div className="mb-3 text-center">
                                     <p className="text-lg font-semibold text-gray-800">
-                                        Photo {currentPhotoStep + 1}/3
+                                        {currentPhotoStep === 0 && "Step 1: Far / Full Face"}
+                                        {currentPhotoStep === 1 && "Step 2: Close / Black & White"}
+                                        {currentPhotoStep === 2 && "Step 3: Close / High Precision"}
                                     </p>
-                                    <p className="text-sm text-gray-500">Position your face in the circle</p>
+                                    <p className="text-sm text-gray-500">
+                                        {currentPhotoStep === 0 && "Position your entire face in the circle."}
+                                        {currentPhotoStep === 1 && "Move closer. Photo will be Black & White."}
+                                        {currentPhotoStep === 2 && "Move closer for high-detail color capture."}
+                                    </p>
                                 </div>
                                 <div className="relative w-full bg-black rounded-lg overflow-hidden aspect-video mb-4">
                                     {!capturedImages[currentPhotoStep] ? (
                                         <>
-                                            <video ref={videoRef} autoPlay playsInline className="w-full h-full object-contain" />
+                                            <video
+                                                ref={videoRef}
+                                                autoPlay
+                                                playsInline
+                                                className={`w-full h-full object-contain ${currentPhotoStep === 1 ? 'grayscale' : ''}`}
+                                            />
+                                            <canvas
+                                                ref={overlayCanvasRef}
+                                                className="absolute inset-0 w-full h-full pointer-events-none"
+                                            />
                                             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                                                 <svg viewBox="0 0 100 100" className="w-full h-full">
-                                                    <ellipse cx="50" cy="50" rx="21" ry="28" fill="none" stroke="white" strokeWidth="0.5" strokeDasharray="2,1" opacity="0.7" />
+                                                    <ellipse
+                                                        cx="50"
+                                                        cy="50"
+                                                        rx={currentPhotoStep === 0 ? "21" : "28"}
+                                                        ry={currentPhotoStep === 0 ? "28" : "38"}
+                                                        fill="none"
+                                                        stroke={faceDetected ? "#00FF00" : "white"}
+                                                        strokeWidth="0.5"
+                                                        strokeDasharray="2,1"
+                                                        opacity="0.7"
+                                                    />
                                                 </svg>
                                             </div>
                                         </>
@@ -454,7 +577,14 @@ const Employees = () => {
                                     {!capturedImages[currentPhotoStep] ? (
                                         <>
                                             <button onClick={cancelCamera} className="flex-1 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg border border-gray-300">Cancel</button>
-                                            <button onClick={takePhoto} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center"><Camera className="w-5 h-5 mr-2" /> Capture</button>
+                                            <button
+                                                onClick={takePhoto}
+                                                disabled={!faceDetected}
+                                                className={`flex-1 px-4 py-2 text-white rounded-lg flex items-center justify-center ${faceDetected ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                                            >
+                                                <Camera className="w-5 h-5 mr-2" />
+                                                {faceDetected ? 'Capture' : 'No Face Detected'}
+                                            </button>
                                         </>
                                     ) : (
                                         <>

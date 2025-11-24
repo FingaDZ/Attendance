@@ -211,7 +211,12 @@ class FaceService:
         known_embeddings_norm = self.known_embeddings / (norm_known + 1e-10)
 
         for face in faces:
-            kps = face.kps if hasattr(face, 'kps') else None
+            # Get landmarks (prefer 106 points, fallback to 5)
+            kps = None
+            if hasattr(face, 'landmark_2d_106') and face.landmark_2d_106 is not None:
+                kps = face.landmark_2d_106
+            elif hasattr(face, 'kps'):
+                kps = face.kps
             
             # 1. Check Strict Position
             # If the ENTIRE face bbox is not within the central zone, skip recognition.

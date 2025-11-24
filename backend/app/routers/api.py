@@ -298,6 +298,11 @@ def generate_frames(camera_id: int, db_session_factory):
             cv2.rectangle(display_frame, (x1, y1), (x2, y2), color, 2)
             cv2.putText(display_frame, f"{name} ({conf:.2f})", (x1, y1 - 10), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+            
+            # Draw landmarks if available
+            if kps is not None:
+                for (x, y) in kps:
+                    cv2.circle(display_frame, (int(x), int(y)), 1, (255, 255, 0), -1)
         
         # Encode frame
         ret, buffer = cv2.imencode('.jpg', display_frame)

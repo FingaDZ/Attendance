@@ -114,7 +114,7 @@ const LiveView = () => {
                         });
 
                         if (response.data && response.data.name) {
-                            const { name, confidence, timestamp } = response.data;
+                            const { name, confidence, timestamp, landmarks } = response.data;
                             setLastDetection({ name, confidence, timestamp });
 
                             // Log attendance if confidence > 0.87 AND name is not Unknown
@@ -129,7 +129,8 @@ const LiveView = () => {
                             setCurrentResults([{
                                 name,
                                 confidence,
-                                bbox: [0, 0, 0, 0] // Placeholder
+                                bbox: [0, 0, 0, 0], // Placeholder
+                                landmarks: landmarks || []
                             }]);
                         } else {
                             setCurrentResults([]);
@@ -176,6 +177,36 @@ const LiveView = () => {
     };
 
     const overlayStyle = getOverlayStyle();
+
+    // Draw landmarks on overlay canvas
+    useEffect(() => {
+        const canvas = overlayCanvasRef.current;
+        const video = videoRef.current;
+        if (!canvas || !video || currentResults.length === 0) {
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            return;
+        }
+
+        const result = currentResults[0];
+        if (!result.landmarks || result.landmarks.length === 0) return;
+
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw landmarks
+        ctx.fillStyle = '#00FFFF'; // Cyan
+        result.landmarks.forEach(([x, y]) => {
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, 2 * Math.PI); // Larger dots (radius 2)
+            ctx.fill();
+        });
+
+    }, [currentResults]);
 
     return (
         <div className="p-6">

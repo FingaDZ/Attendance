@@ -202,7 +202,8 @@ async def recognize_face(file: UploadFile = File(...)):
             "name": name,
             "confidence": float(conf),
             "employee_id": emp_id,
-            "timestamp": server_time
+            "timestamp": server_time,
+            "landmarks": kps.tolist() if kps is not None else []
         }
     except Exception as e:
         print(f"Recognition error: {e}")

@@ -448,10 +448,10 @@ const Employees = () => {
                                 </div>
 
                                 <div className="mb-6">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Photos (3 required)</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Photos (6 required)</label>
 
                                     <div className="grid grid-cols-3 gap-3 mb-3">
-                                        {[0, 1, 2].map((photoIndex) => (
+                                        {[0, 1, 2, 3, 4, 5].map((photoIndex) => (
                                             <div key={photoIndex} className="relative">
                                                 <div className="relative w-full h-32 bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
                                                     {selectedFiles[photoIndex] ? (
@@ -510,7 +510,7 @@ const Employees = () => {
                                     </div>
 
                                     <div className="text-xs text-gray-500 text-center">
-                                        {selectedFiles.filter(f => f).length}/3 photos captured
+                                        {selectedFiles.filter(f => f).length}/6 photos captured
                                     </div>
                                 </div>
 
@@ -524,8 +524,8 @@ const Employees = () => {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={showAddModal && (!selectedFiles[0] || !selectedFiles[1] || !selectedFiles[2])}
-                                        className={`px-4 py-2 rounded-lg text-white ${showAddModal && (!selectedFiles[0] || !selectedFiles[1] || !selectedFiles[2]) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                                        disabled={showAddModal && (!selectedFiles[0] || !selectedFiles[1] || !selectedFiles[2] || !selectedFiles[3] || !selectedFiles[4] || !selectedFiles[5])}
+                                        className={`px-4 py-2 rounded-lg text-white ${showAddModal && (!selectedFiles[0] || !selectedFiles[1] || !selectedFiles[2] || !selectedFiles[3] || !selectedFiles[4] || !selectedFiles[5]) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                                     >
                                         {showAddModal ? 'Register' : 'Update'}
                                     </button>

@@ -25,6 +25,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Smart Auth (LAN bypass, WAN auth)
+from .middleware.smart_auth import SmartAuthMiddleware
+app.add_middleware(SmartAuthMiddleware)
+
 app.include_router(api.router, prefix="/api")
 
 # Initialize scheduler

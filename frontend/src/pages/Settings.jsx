@@ -3,22 +3,56 @@ import api from '../api';
 import { Plus, Trash2, Camera, Power, CheckCircle } from 'lucide-react';
 
 const Settings = () => {
-    const [cameras, setCameras] = useState([]);
-    const [newCamName, setNewCamName] = useState('');
-    const [newCamSource, setNewCamSource] = useState('');
+    const [wanDomain, setWanDomain] = useState('');
+    const [loadingWan, setLoadingWan] = useState(false);
 
     const fetchCameras = async () => {
         try {
             const response = await api.get('/cameras/');
-            setCameras(response.data);
+            if (Array.isArray(response.data)) {
+                setCameras(response.data);
+            } else {
+                setCameras([]);
+                console.error("Invalid cameras data:", response.data);
+            }
         } catch (err) {
             console.error("Failed to fetch cameras", err);
+            setCameras([]);
+        }
+    };
+
+    const fetchSettings = async () => {
+        try {
+            const response = await api.get('/settings/wan_domain');
+            setWanDomain(response.data.value || '');
+        } catch (err) {
+            console.error("Failed to fetch WAN domain", err);
         }
     };
 
     useEffect(() => {
         fetchCameras();
+        fetchSettings();
     }, []);
+
+    const handleSaveWanDomain = async (e) => {
+        e.preventDefault();
+        setLoadingWan(true);
+        try {
+            const formData = new FormData();
+            formData.append('key', 'wan_domain');
+            formData.append('value', wanDomain);
+            formData.append('description', 'Public domain for WAN access');
+
+            await api.post('/settings/', formData);
+            alert('WAN Domain saved successfully!');
+        } catch (err) {
+            console.error("Failed to save WAN domain", err);
+            alert('Failed to save settings.');
+        } finally {
+            setLoadingWan(false);
+        }
+    };
 
     const handleAddCamera = async (e) => {
         e.preventDefault();
@@ -65,6 +99,31 @@ const Settings = () => {
     return (
         <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-6">Settings</h1>
+
+            {/* WAN Domain Configuration */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">WAN Domain Configuration</h2>
+                <form onSubmit={handleSaveWanDomain} className="flex gap-4 items-end">
+                    <div className="flex-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Public Domain URL</label>
+                        <input
+                            type="text"
+                            value={wanDomain}
+                            onChange={(e) => setWanDomain(e.target.value)}
+                            placeholder="https://your-domain.com"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Used for generating correct links when accessing from outside.</p>
+                    </div>
+                    <button
+                        type="submit"
+                        disabled={loadingWan}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center mb-[1px] disabled:opacity-50"
+                    >
+                        {loadingWan ? 'Saving...' : 'Save'}
+                    </button>
+                </form>
+            </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
                 <h2 className="text-lg font-semibold text-gray-800 mb-4">Add Camera</h2>
@@ -131,14 +190,14 @@ const Settings = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                        {cameras.map((cam) => (
+                        {Array.isArray(cameras) && cameras.map((cam) => (
                             <tr key={cam.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4">
                                     <button
                                         onClick={() => handleSelectCamera(cam.id)}
                                         className={`w-6 h-6 rounded-full border flex items-center justify-center ${cam.is_selected
-                                                ? 'bg-blue-600 border-blue-600 text-white'
-                                                : 'border-gray-300 text-transparent hover:border-blue-400'
+                                            ? 'bg-blue-600 border-blue-600 text-white'
+                                            : 'border-gray-300 text-transparent hover:border-blue-400'
                                             }`}
                                         title="Select for Live View"
                                     >
@@ -172,7 +231,7 @@ const Settings = () => {
                                 </td>
                             </tr>
                         ))}
-                        {cameras.length === 0 && (
+                        {(!Array.isArray(cameras) || cameras.length === 0) && (
                             <tr>
                                 <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
                                     No cameras configured.

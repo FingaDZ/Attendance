@@ -46,3 +46,12 @@ class Camera(Base):
     source = Column(String) # URL or Index
     is_active = Column(Integer, default=1) # 1 for active, 0 for inactive
     is_selected = Column(Integer, default=0) # 1 if this is the currently selected camera for LiveView
+
+class SystemSettings(Base):
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String, unique=True, index=True, nullable=False)
+    value = Column(String, nullable=True)
+    description = Column(String, nullable=True)
+    updated_at = Column(DateTime(timezone=False), default=datetime.datetime.now, onupdate=datetime.datetime.now)

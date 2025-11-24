@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
-from ..models import Employee, AttendanceLog, Camera
+from ..models import Employee, AttendanceLog, Camera, SystemSettings
 from ..services.face_service import face_service
 from ..services.camera_service import camera_service
 import cv2
@@ -13,7 +13,47 @@ import threading
 import time
 import datetime
 
+
 router = APIRouter()
+
+# --- System Settings ---
+@router.get("/settings/")
+def get_settings(db: Session = Depends(get_db)):
+    return db.query(SystemSettings).all()
+
+@router.get("/settings/{key}")
+def get_setting(key: str, db: Session = Depends(get_db)):
+    setting = db.query(SystemSettings).filter(SystemSettings.key == key).first()
+    if not setting:
+        # Return default for wan_domain if not set
+        if key == "wan_domain":
+            return {"key": "wan_domain", "value": "https://hgq09k0j9p1.sn.mynetname.net"}
+        raise HTTPException(status_code=404, detail="Setting not found")
+    return setting
+
+@router.post("/settings/")
+def update_setting(key: str = Form(...), value: str = Form(...), description: str = Form(None), db: Session = Depends(get_db)):
+    setting = db.query(SystemSettings).filter(SystemSettings.key == key).first()
+    if setting:
+        setting.value = value
+        if description:
+            setting.description = description
+    else:
+        setting = SystemSettings(key=key, value=value, description=description)
+        db.add(setting)
+    db.commit()
+    db.refresh(setting)
+    return setting
+
+@router.delete("/settings/{key}")
+def delete_setting(key: str, db: Session = Depends(get_db)):
+    setting = db.query(SystemSettings).filter(SystemSettings.key == key).first()
+    if not setting:
+        raise HTTPException(status_code=404, detail="Setting not found")
+    db.delete(setting)
+    db.commit()
+    return {"status": "deleted"}
+
 
 # Global lock for attendance logging to prevent race conditions
 attendance_lock = threading.Lock()

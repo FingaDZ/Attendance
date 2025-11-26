@@ -784,3 +784,14 @@ You can now import employees via CSV/Excel from the "Employees" page.
 > [!IMPORTANT]
 > **Manual Photo Upload Required**
 > Employees imported via file do **NOT** have facial recognition data. You must manually edit each imported employee and capture/upload 6 photos for the system to recognize them.
+
+---
+
+## 🆕 Version 1.7.2 Specifics
+
+### LAN Access (Crucial)
+When accessing the application from the Local Area Network (LAN), you **MUST** use port **8000**:
+- **Correct**: `http://192.168.20.56:8000`
+- **Incorrect**: `http://192.168.20.56:3000` (Will cause "Invalid cameras data" and white screens)
+
+Port 8000 is the Backend API which correctly routes requests to both the API and the Frontend. Port 3000 is only the raw frontend server and cannot handle API requests directly.

@@ -1,6 +1,6 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-1.7.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.7.2-blue.svg)
 
 # Attendance System
 
@@ -11,6 +11,11 @@ A modern facial recognition attendance system with a Python (FastAPI) backend an
 - **[Windows 10/11 Deployment Guide](deployment_guide_windows.md)** (For Local Testing/Dev)
 
 ## 📋 Changelog
+
+### v1.7.2 (2025-11-26)
+- **Fix**: Resolved `NameError: name 'pd' is not defined` by ensuring correct imports in `api.py`.
+- **Docs**: Clarified LAN access instructions (must use port 8000 for full functionality).
+- **Improvement**: Stabilized Import/Export feature with proper dependency checks.
 
 ### v1.7.1 (2025-11-26)
 - **Feature**: Added strict time constraints for attendance logging (ENTRY: 03:00-13:30, EXIT: 12:00-23:59).

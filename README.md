@@ -1,6 +1,6 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-1.6.15-blue.svg)
+![Version](https://img.shields.io/badge/version-1.7.1-blue.svg)
 
 # Attendance System
 
@@ -11,6 +11,12 @@ A modern facial recognition attendance system with a Python (FastAPI) backend an
 - **[Windows 10/11 Deployment Guide](deployment_guide_windows.md)** (For Local Testing/Dev)
 
 ## 📋 Changelog
+
+### v1.7.1 (2025-11-26)
+- **Feature**: Added strict time constraints for attendance logging (ENTRY: 03:00-13:30, EXIT: 12:00-23:59).
+- **Feature**: Added Employee Import/Export functionality (CSV/Excel).
+- **Improvement**: Enhanced error messages for attendance validation.
+- **Fix**: Resolved API routing issues and improved CORS configuration.
 
 ### v1.6.15 (2025-11-25)
 - **Fix**: Restored missing state variables in Settings page (`newCamName` error).

@@ -767,3 +767,20 @@ The system provides a REST API for external integrations. See [API_INTEGRATION.m
 ```bash
 curl "https://attendance-api.yourdomain.com/api/attendance/?start_date=2024-01-01&end_date=2024-01-31"
 ```
+
+---
+
+## 🆕 Version 1.7.1 Specifics
+
+### Time Constraints
+The system now enforces strict time windows for attendance logging:
+- **ENTRY**: 03:00 - 13:30
+- **EXIT**: 12:00 - 23:59
+- **Cooldown**: 4 hours minimum between Entry and Exit.
+
+### Employee Import/Export
+You can now import employees via CSV/Excel from the "Employees" page.
+
+> [!IMPORTANT]
+> **Manual Photo Upload Required**
+> Employees imported via file do **NOT** have facial recognition data. You must manually edit each imported employee and capture/upload 6 photos for the system to recognize them.

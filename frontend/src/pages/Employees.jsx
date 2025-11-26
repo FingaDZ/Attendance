@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../api';
-import { UserPlus, Trash2, User, Camera, X, Check, RefreshCw, Edit, Eye } from 'lucide-react';
+import { UserPlus, Trash2, User, Camera, X, Check, RefreshCw, Edit, Eye, Download, Upload } from 'lucide-react';
 
 const Employees = () => {
     const [employees, setEmployees] = useState([]);
@@ -347,18 +347,101 @@ const Employees = () => {
         setShowViewModal(true);
     };
 
+    const handleExportCSV = async () => {
+        try {
+            const response = await api.get('/employees/export?format=csv', {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'employees.csv');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert('Erreur lors de l\'export CSV');
+        }
+    };
+
+    const handleExportExcel = async () => {
+        try {
+            const response = await api.get('/employees/export?format=excel', {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'employees.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            alert('Erreur lors de l\'export Excel');
+        }
+    };
+
+    const handleImport = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await api.post('/employees/import', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            alert(response.data.message);
+            fetchEmployees(); // Rafraîchir la liste
+        } catch (err) {
+            alert('Erreur lors de l\'import: ' + (err.response?.data?.detail || err.message));
+        }
+
+        e.target.value = ''; // Reset input
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-800">Employees</h1>
                 {/* Responsive table wrapper added */}
-                <button
-                    onClick={() => { resetForm(); setShowAddModal(true); }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
-                >
-                    <UserPlus className="w-5 h-5 mr-2" />
-                    Add Employee
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleExportCSV}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                        title="Export to CSV"
+                    >
+                        <Download className="w-5 h-5 mr-2" />
+                        CSV
+                    </button>
+                    <button
+                        onClick={handleExportExcel}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                        title="Export to Excel"
+                    >
+                        <Download className="w-5 h-5 mr-2" />
+                        Excel
+                    </button>
+                    <label className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center cursor-pointer transition-colors">
+                        <Upload className="w-5 h-5 mr-2" />
+                        Import
+                        <input
+                            type="file"
+                            accept=".csv,.xlsx,.xls"
+                            onChange={handleImport}
+                            className="hidden"
+                        />
+                    </label>
+                    <button
+                        onClick={() => { resetForm(); setShowAddModal(true); }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center transition-colors"
+                    >
+                        <UserPlus className="w-5 h-5 mr-2" />
+                        Add Employee
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

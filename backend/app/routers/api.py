@@ -198,9 +198,9 @@ def verify_pin(employee_id: int = Form(...), pin: str = Form(...), db: Session =
     
     if emp.pin and emp.pin == pin:
         # Log attendance with Entry/Exit logic
-        log_type = check_attendance_status(emp.id, db)
+        log_type, error_msg = check_attendance_status(emp.id, db)
         if not log_type:
-            return {"status": "already_logged", "name": emp.name, "message": "Already logged Entry and Exit for today."}
+            return {"status": "blocked", "name": emp.name, "message": error_msg}
 
         log = AttendanceLog(employee_id=emp.id, employee_name=emp.name, camera_id="PIN", confidence=1.0, type=log_type)
         db.add(log)
@@ -390,34 +390,84 @@ def video_feed(camera_id: int, db: Session = Depends(get_db)):
 
 # --- Attendance Logging ---
 
-def check_attendance_status(employee_id: int, db: Session):
-    """Determine if next log should be ENTRY or EXIT"""
+def check_time_constraints(log_type: str) -> tuple[bool, str]:
+    """
+    Vérifie si l'heure actuelle respecte les contraintes horaires.
+    
+    Args:
+        log_type: 'ENTRY' ou 'EXIT'
+    
+    Returns:
+        (is_valid, error_message)
+    """
+    now = datetime.datetime.now()
+    current_hour = now.hour
+    current_minute = now.minute
+    current_time_minutes = current_hour * 60 + current_minute
+    
+    if log_type == 'ENTRY':
+        # ENTRY: 03h00 à 13h30
+        start_time = 3 * 60  # 03:00 = 180 minutes
+        end_time = 13 * 60 + 30  # 13:30 = 810 minutes
+        
+        if not (start_time <= current_time_minutes <= end_time):
+            return False, "Les entrées sont autorisées uniquement entre 03h00 et 13h30"
+    
+    elif log_type == 'EXIT':
+        # EXIT: 12h00 à 23h59 (pas après minuit)
+        start_time = 12 * 60  # 12:00 = 720 minutes
+        end_time = 23 * 60 + 59  # 23:59 = 1439 minutes
+        
+        if not (start_time <= current_time_minutes <= end_time):
+            return False, "Les sorties sont autorisées uniquement entre 12h00 et 23h59"
+    
+    return True, ""
+
+def check_attendance_status(employee_id: int, db: Session) -> tuple[str | None, str | None]:
+    """Determine if next log should be ENTRY or EXIT
+    
+    Returns:
+        (log_type, error_message)
+    """
     today_start = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     logs = db.query(AttendanceLog).filter(
         AttendanceLog.employee_id == employee_id,
         AttendanceLog.timestamp >= today_start
     ).order_by(AttendanceLog.timestamp.asc()).all()
     
-    # Strict Logic: 1 Entry / 1 Exit per day
-    has_entry = any(log.type == 'ENTRY' for log in logs)
-    has_exit = any(log.type == 'EXIT' for log in logs)
-    
-    if has_exit:
-        print(f"Blocked: Already has EXIT for today.")
-        return None # Day complete
-        
-    if not has_entry:
-        return 'ENTRY'
-        
-    # If has_entry and not has_exit:
-    # Check cooldown (4 hours = 14400 seconds)
-    last_log = logs[-1]
-    time_diff = (datetime.datetime.now() - last_log.timestamp.replace(tzinfo=None)).total_seconds()
-    if time_diff < 14400:
-        print(f"Blocked: Cooldown active. {14400 - time_diff}s remaining.")
-        return None
+    # Nouvelle logique stricte : 1 seule entrée et 1 seule sortie par jour
+    entry_logs = [log for log in logs if log.type == 'ENTRY']
+    exit_logs = [log for log in logs if log.type == 'EXIT']
 
-    return 'EXIT'
+    if len(entry_logs) >= 1 and len(exit_logs) >= 1:
+        print(f"Blocked: Already has ENTRY and EXIT for today.")
+        return None, "Vous avez déjà enregistré une entrée et une sortie aujourd'hui."
+
+    if len(entry_logs) == 0:
+        # Vérifier contrainte horaire pour ENTRY
+        is_valid, error_msg = check_time_constraints('ENTRY')
+        if not is_valid:
+            return None, error_msg
+        return 'ENTRY', None
+
+    if len(entry_logs) == 1 and len(exit_logs) == 0:
+        # Check cooldown (4 hours = 14400 seconds)
+        last_log = logs[-1]
+        time_diff = (datetime.datetime.now() - last_log.timestamp.replace(tzinfo=None)).total_seconds()
+        if time_diff < 14400:
+            remaining_minutes = int((14400 - time_diff) / 60)
+            print(f"Blocked: Cooldown active. {remaining_minutes} minutes remaining.")
+            return None, f"Vous devez attendre {remaining_minutes} minutes avant de pouvoir sortir."
+        
+        # Vérifier contrainte horaire pour EXIT
+        is_valid, error_msg = check_time_constraints('EXIT')
+        if not is_valid:
+            return None, error_msg
+        return 'EXIT', None
+
+    # Toute autre situation : blocage
+    print(f"Blocked: Invalid state for entry/exit logs.")
+    return None, "État invalide des logs d'assiduité."
 
 @router.post("/log_attendance/")
 def log_attendance(employee_id: int, camera_id: str, confidence: float, db: Session = Depends(get_db)):
@@ -431,10 +481,10 @@ def log_attendance(employee_id: int, camera_id: str, confidence: float, db: Sess
         
         last_processed[employee_id] = now
 
-        log_type = check_attendance_status(employee_id, db)
+        log_type, error_msg = check_attendance_status(employee_id, db)
         print(f"Log Request: Emp {employee_id}, Conf {confidence}. Status: {log_type}")
         if not log_type:
-            return {"status": "already_logged_or_blocked"}
+            return {"status": "blocked", "message": error_msg}
     
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
@@ -551,3 +601,110 @@ def get_work_time(employee_id: int = None, date: str = None, db: Session = Depen
         "entry_time": entry_log.timestamp.isoformat(),
         "exit_time": exit_log.timestamp.isoformat()
     }
+
+# Routes d'import/export d'employés
+@router.get("/employees/export")
+def export_employees(format: str = "csv", db: Session = Depends(get_db)):
+    """
+    Exporte la liste des employés en CSV ou Excel.
+    Format: csv ou excel
+    """
+    employees = db.query(Employee).all()
+    
+    # Préparer les données
+    data = []
+    for emp in employees:
+        data.append({
+            "id": emp.id,
+            "name": emp.name,
+            "department": emp.department or "",
+            "pin": emp.pin or "",
+            "created_at": emp.created_at.strftime("%Y-%m-%d %H:%M:%S") if emp.created_at else ""
+        })
+    
+    if format == "excel":
+        # Export Excel
+        df = pd.DataFrame(data)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Employees')
+        output.seek(0)
+        
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=employees.xlsx"}
+        )
+    else:
+        # Export CSV
+        output = io.StringIO()
+        writer = csv.DictWriter(output, fieldnames=["id", "name", "department", "pin", "created_at"])
+        writer.writeheader()
+        writer.writerows(data)
+        
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=employees.csv"}
+        )
+
+@router.post("/employees/import")
+async def import_employees(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """
+    Importe des employés depuis un fichier CSV ou Excel.
+    Les photos et embeddings doivent être ajoutés manuellement après l'import.
+    """
+    try:
+        content = await file.read()
+        
+        # Déterminer le format
+        if file.filename.endswith('.csv'):
+            df = pd.read_csv(io.BytesIO(content))
+        elif file.filename.endswith(('.xlsx', '.xls')):
+            df = pd.read_excel(io.BytesIO(content))
+        else:
+            raise HTTPException(status_code=400, detail="Format de fichier non supporté. Utilisez CSV ou Excel.")
+        
+        # Valider les colonnes requises
+        required_columns = ['name']
+        if not all(col in df.columns for col in required_columns):
+            raise HTTPException(status_code=400, detail=f"Colonnes requises: {required_columns}")
+        
+        imported_count = 0
+        skipped_count = 0
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                # Vérifier si l'employé existe déjà (par nom)
+                existing = db.query(Employee).filter(Employee.name == row['name']).first()
+                if existing:
+                    skipped_count += 1
+                    continue
+                
+                # Créer nouvel employé (sans photos)
+                new_emp = Employee(
+                    name=row['name'],
+                    department=row.get('department', None) if 'department' in row else None,
+                    pin=str(row.get('pin', '')) if 'pin' in row and not pd.isna(row['pin']) else None
+                )
+                db.add(new_emp)
+                imported_count += 1
+                
+            except Exception as e:
+                errors.append(f"Ligne {index + 2}: {str(e)}")
+        
+        db.commit()
+        
+        return {
+            "status": "success",
+            "imported": imported_count,
+            "skipped": skipped_count,
+            "errors": errors,
+            "message": f"{imported_count} employés importés, {skipped_count} ignorés (déjà existants). Les photos doivent être ajoutées manuellement."
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de l'import: {str(e)}")

@@ -66,7 +66,9 @@ class CameraStream:
                     time.sleep(2)
                     self._open_capture()
             else:
-                time.sleep(0.1)
+                print(f"Camera not opened for {self.source}, retrying...")
+                time.sleep(1)
+                self._open_capture()
             
             # Limit capture rate to save CPU (approx 30 FPS max capture)
             time.sleep(0.01)

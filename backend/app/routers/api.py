@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from ..database import get_db
+from ..database import get_db, SessionLocal
 from ..models import Employee, AttendanceLog, Camera, SystemSettings
 from ..services.face_service import face_service
 from ..services.camera_service import camera_service

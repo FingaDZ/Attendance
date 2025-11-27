@@ -3,16 +3,32 @@ from insightface.app import FaceAnalysis
 import numpy as np
 import cv2
 import pickle
+from .landmark_service import landmark_service
+from .liveness_service import get_liveness_service
+from .landmark_service import landmark_service
+from .liveness_service import get_liveness_service
+from .adaptive_training_service import adaptive_training_service
+# from .ensemble_service import ensemble_service
 
 class FaceService:
     def __init__(self):
-        # Initialize InsightFace
+        # Initialize InsightFace with 106 landmarks support
         # providers=['CUDAExecutionProvider', 'CPUExecutionProvider'] if GPU available
-        self.app = FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider'])
+        self.app = FaceAnalysis(
+            name='buffalo_l',
+            providers=['CPUExecutionProvider'],
+            allowed_modules=['detection', 'recognition', 'landmark_3d_68']
+        )
         self.app.prepare(ctx_id=0, det_size=(640, 640))
         self.known_embeddings = []
         self.known_names = []
         self.known_ids = []
+        
+        # Initialize landmark and liveness services
+        self.landmark_service = landmark_service
+        self.liveness_service = get_liveness_service(landmark_service)
+        self.adaptive_training_service = adaptive_training_service
+        # self.ensemble_service = ensemble_service
 
     def load_embeddings(self, db_employees):
         """Load all 6 embeddings from database into memory for fast lookup."""
@@ -274,10 +290,15 @@ class FaceService:
         
         return processed_bytes, embedding_pickle
 
-    def recognize_faces(self, frame):
+    def recognize_faces(self, frame, use_liveness=True, db=None):
         """
-        Detect and recognize faces in a frame.
-        Returns list of (name, bbox, confidence, employee_id, landmarks)
+        Detect and recognize faces in a frame with enhanced landmarks and liveness detection.
+        Returns list of (name, bbox, confidence, employee_id, landmarks, liveness_score)
+        
+        Args:
+            frame: Image frame
+            use_liveness: Boolean to enable liveness detection
+            db: Optional database session for adaptive training
         """
         # Normalize input frame
         frame = self.normalize_image(frame)
@@ -287,9 +308,9 @@ class FaceService:
 
         if len(self.known_embeddings) == 0:
             for face in faces:
-                # Return landmarks even if unknown
-                kps = face.kps if hasattr(face, 'kps') else None
-                results.append(("Unknown", face.bbox, 0.0, None, kps))
+                # Extract precise landmarks using MediaPipe (468 points)
+                kps = self.landmark_service.extract_landmarks_from_frame(frame, face.bbox)
+                results.append(("Unknown", face.bbox, 0.0, None, kps, 0.0))
             return results
 
         # Normalize known embeddings
@@ -297,17 +318,20 @@ class FaceService:
         known_embeddings_norm = self.known_embeddings / (norm_known + 1e-10)
 
         for face in faces:
-            # Get landmarks (prefer 106 points, fallback to 5)
-            kps = None
-            if hasattr(face, 'landmark_2d_106') and face.landmark_2d_106 is not None:
-                kps = face.landmark_2d_106
-            elif hasattr(face, 'kps'):
-                kps = face.kps
+            # Extract precise landmarks using MediaPipe (468 points)
+            kps = self.landmark_service.extract_landmarks_from_frame(frame, face.bbox)
+            
+            # Calculate liveness score
+            liveness_score = 0.0
+            if use_liveness and kps is not None:
+                liveness_score = self.liveness_service.calculate_liveness_score(
+                    frame, kps, face.bbox
+                )
             
             # 1. Check Strict Position
             # If the ENTIRE face bbox is not within the central zone, skip recognition.
             if not self.is_face_strictly_centered(face.bbox, frame.shape[1], frame.shape[0]):
-                results.append(("Positioning...", face.bbox, 0.0, None, kps))
+                results.append(("Positioning...", face.bbox, 0.0, None, kps, liveness_score))
                 continue
 
             # Normalize face embedding
@@ -319,16 +343,60 @@ class FaceService:
             max_sim_idx = np.argmax(sims)
             max_sim = sims[max_sim_idx]
             
-            print(f"Detected Face. Best Match: {self.known_names[max_sim_idx]} with Score: {max_sim:.4f}")
+            print(f"Detected Face. Best Match: {self.known_names[max_sim_idx]} with Score: {max_sim:.4f}, Liveness: {liveness_score:.2f}")
 
-            if max_sim > 0.85:  # 85% confidence threshold
+            # Calculate adaptive threshold based on liveness
+            threshold = self.calculate_adaptive_threshold(liveness_score)
+            
+            # --- Ensemble Method (Phase 3) - DISABLED due to dependency conflicts ---
+            # if max_sim < threshold and max_sim > (threshold - 0.10):
+            #     face_crop = self.crop_face_region(frame, face.bbox, margin=0.0)
+            #     is_verified, dist = self.ensemble_service.verify_identity(face_crop, self.known_ids[max_sim_idx])
+            #     if is_verified:
+            #         print(f"✨ Ensemble Rescue: InsightFace {max_sim:.4f} -> DeepFace Verified (Dist: {dist:.4f})")
+            #         max_sim = threshold + 0.02
+            #     else:
+            #         print(f"🚫 Ensemble Reject: InsightFace {max_sim:.4f} -> DeepFace Rejected (Dist: {dist:.4f})")
+            
+            if max_sim > threshold:
                 name = self.known_names[max_sim_idx]
                 emp_id = self.known_ids[max_sim_idx]
-                results.append((name, face.bbox, float(max_sim), emp_id, kps))
+                results.append((name, face.bbox, float(max_sim), emp_id, kps, liveness_score))
+                
+                # Trigger Adaptive Training if DB session is provided
+                if db is not None:
+                    self.adaptive_training_service.process_recognition(
+                        db, emp_id, face_emb, float(max_sim), liveness_score
+                    )
             else:
-                results.append(("Unknown", face.bbox, float(max_sim), None, kps))
+                results.append(("Unknown", face.bbox, float(max_sim), None, kps, liveness_score))
         
         return results
+    
+    def calculate_adaptive_threshold(self, liveness_score):
+        """
+        Calculate adaptive recognition threshold based on liveness score.
+        Higher liveness = lower threshold (more tolerant)
+        Lower liveness = higher threshold (more strict)
+        
+        Args:
+            liveness_score: Score from 0.0 to 1.0
+            
+        Returns:
+            float: Threshold for face recognition
+        """
+        base_threshold = 0.85
+        
+        # If liveness is very high, we can be more tolerant
+        if liveness_score > 0.85:
+            return 0.80  # Reduce threshold by 5%
+        elif liveness_score > 0.70:
+            return 0.83  # Reduce threshold by 2%
+        elif liveness_score > 0.50:
+            return 0.85  # Keep base threshold
+        else:
+            # Low liveness = be more strict
+            return 0.88  # Increase threshold by 3%
 
     def is_face_strictly_centered(self, bbox, img_w, img_h):
         # bbox: [x1, y1, x2, y2]

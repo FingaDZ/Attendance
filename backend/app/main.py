@@ -5,6 +5,7 @@ from .database import engine, Base, SessionLocal, migrate_database_schema
 from .models import Camera
 from .services.face_service import face_service
 from .services.camera_service import camera_service
+# from .services.ensemble_service import ensemble_service
 from .models import Employee
 from .cron_cleanup import cleanup_old_logs
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -46,6 +47,9 @@ async def startup_event():
     db = SessionLocal()
     employees = db.query(Employee).all()
     face_service.load_embeddings(employees)
+    
+    # Initialize Ensemble Service (DeepFace) - DISABLED
+    # ensemble_service.initialize(db)
     
     # Initialize cameras
     # Check if we have any cameras, if not add the default webcam

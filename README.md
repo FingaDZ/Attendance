@@ -1,48 +1,84 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-1.7.2-blue.svg)
+![Version](https://img.shields.io/badge/version-1.8.0-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
 
-# Attendance System
+# Attendance System v1.8.0 🚀
 
-A modern facial recognition attendance system with a Python (FastAPI) backend and React frontend.
+A state-of-the-art facial recognition attendance system designed for high accuracy and adaptability. Built with **FastAPI** (Backend) and **React** (Frontend).
 
-## 📚 Deployment Guides
+## 🌟 Key Features (v1.8.0)
+
+### 1. High-Precision Recognition (MediaPipe) 👁️
+- **478 Facial Landmarks**: Uses MediaPipe Face Mesh for extreme precision (vs 68 points in older versions).
+- **Robust Liveness Detection**: Active detection of blinking, head movement, and texture analysis to prevent photo spoofing.
+- **Iris Tracking**: Precise eye tracking for attention awareness.
+
+### 2. Adaptive Training System 🧠
+- **Self-Learning**: The system automatically updates employee profiles when appearance changes (e.g., beard growth, aging).
+- **Stability Check**: Updates only trigger after **3 consecutive high-confidence recognitions** (>90%).
+- **Weighted Updates**: Uses a rolling average to gradually evolve the biometric profile without losing the original identity.
+
+### 3. Enterprise-Grade Attendance ⏱️
+- **Strict Time Constraints**: Configurable windows for ENTRY (03:00-13:30) and EXIT (12:00-23:59).
+- **Smart Auth**: Secure WAN access with PIN protection, seamless LAN access.
+- **Reporting**: Export attendance logs to Excel/CSV.
+
+---
+
+## 📂 Project Structure
+
+### Backend (`/backend`)
+Powered by **FastAPI** and **Python 3.10**.
+- **`app/services/face_service.py`**: Core recognition engine (InsightFace + MediaPipe).
+- **`app/services/adaptive_training_service.py`**: Logic for automatic profile updates.
+- **`app/services/liveness_service.py`**: Anti-spoofing logic.
+- **`app/routers/api.py`**: REST API endpoints.
+- **`app/models.py`**: SQLAlchemy database models.
+
+### Frontend (`/frontend`)
+Built with **React 19**, **Vite**, and **TailwindCSS**.
+- **`src/pages/Dashboard.jsx`**: Real-time camera feed and attendance status.
+- **`src/pages/Employees.jsx`**: Employee management (Add/Edit/Delete).
+- **`src/pages/AttendanceLogs.jsx`**: View and export logs.
+
+---
+
+## 🚀 Deployment
+
+### Quick Start (Ubuntu 22.04)
+We provide a dedicated script for easy deployment on Ubuntu.
+
+```bash
+chmod +x deploy_ubuntu.sh
+./deploy_ubuntu.sh
+```
+
+### Manual Installation
+See the detailed guides below:
 - **[Ubuntu / Linux Deployment Guide](deployment_guide.md)** (Recommended for Production)
-- **[Windows 10/11 Deployment Guide](deployment_guide_windows.md)** (For Local Testing/Dev)
+- **[Windows 10/11 Deployment Guide](deployment_guide_windows.md)** (For Local Testing)
+
+---
 
 ## 📋 Changelog
 
+### v1.8.0 (2025-11-27) - MAJOR UPDATE
+- **New**: Integrated **MediaPipe Face Mesh** (478 landmarks) for superior accuracy.
+- **New**: Added **Adaptive Training System** for automatic profile updates.
+- **New**: Implemented **Active Liveness Detection** (Blink/Motion).
+- **Security**: Enhanced anti-spoofing measures.
+- **Fix**: Resolved dependency conflicts (Protobuf/Numpy) for stable production deployment.
+
 ### v1.7.2 (2025-11-26)
-- **Fix**: Resolved `NameError: name 'pd' is not defined` by ensuring correct imports in `api.py`.
-- **Docs**: Clarified LAN access instructions (must use port 8000 for full functionality).
-- **Improvement**: Stabilized Import/Export feature with proper dependency checks.
+- **Fix**: Resolved `NameError` in API imports.
+- **Docs**: Clarified LAN access instructions.
+- **Improvement**: Stabilized Import/Export feature.
 
 ### v1.7.1 (2025-11-26)
-- **Feature**: Added strict time constraints for attendance logging (ENTRY: 03:00-13:30, EXIT: 12:00-23:59).
-- **Feature**: Added Employee Import/Export functionality (CSV/Excel).
-- **Improvement**: Enhanced error messages for attendance validation.
-- **Fix**: Resolved API routing issues and improved CORS configuration.
+- **Feature**: Added strict time constraints for attendance.
+- **Feature**: Added Employee Import/Export.
 
-### v1.6.15 (2025-11-25)
-- **Fix**: Restored missing state variables in Settings page (`newCamName` error).
-- **Fix**: Added robust data safety checks in Dashboard to prevent white screen on LAN (`filter` error).
-- **Docs**: Updated deployment guides and README with latest instructions.
-
-### v1.6.14 (2025-11-24)
-- **Fix**: Resolved frontend build permissions and path issues.
-- **Improvement**: Enhanced error handling for network requests between frontend and backend.
-- **Config**: Updated default API timeouts for slower networks.
-
-### v1.6.13 (2025-11-24)
-- **Fix**: Addressed initial LAN connectivity issues and CORS policies.
-- **Refactor**: Cleanup of unused components in the dashboard.
-- **UI**: Minor visual improvements to the sidebar and navigation.
-
-### v1.6.12 (2025-11-24)
-- **Fix**: Resolved LAN access issues (white page) by adding data safety checks in frontend.
-- **Feature**: Re-implemented WAN Domain Configuration in Settings.
-- **Security**: Restored SmartAuthMiddleware for secure WAN access.
+---
 
 ## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.

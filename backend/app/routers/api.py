@@ -228,8 +228,9 @@ def delete_employee(emp_id: int, db: Session = Depends(get_db)):
     return {"status": "deleted"}
 
 @router.post("/recognize/")
-async def recognize_face(file: UploadFile = File(...)):
-    """Recognize face from uploaded image"""
+@router.post("/recognize/")
+async def recognize_face(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """Recognize face from uploaded image with enhanced landmarks and liveness"""
     try:
         contents = await file.read()
         nparr = np.frombuffer(contents, np.uint8)
@@ -238,17 +239,14 @@ async def recognize_face(file: UploadFile = File(...)):
         if img is None:
             raise HTTPException(status_code=400, detail="Invalid image")
         
-        # Recognize faces
-        results = face_service.recognize_faces(img)
+        # Recognize faces with liveness detection
+        results = face_service.recognize_faces(img, use_liveness=True, db=db)
         
         if not results:
-            return {"name": "Unknown", "confidence": 0.0, "employee_id": None}
+            return {"name": "Unknown", "confidence": 0.0, "employee_id": None, "liveness_score": 0.0}
         
         # Get the first (best) result
-        name, bbox, conf, emp_id, kps = results[0]
-        
-        # Calculate Liveness Score (v1.6.0)
-        liveness_score = face_service.calculate_liveness_score(img, bbox)
+        name, bbox, conf, emp_id, kps, liveness_score = results[0]
         
         # Get server timestamp
         server_time = datetime.datetime.now().strftime("%H:%M:%S")
@@ -256,9 +254,10 @@ async def recognize_face(file: UploadFile = File(...)):
         return {
             "name": name,
             "confidence": float(conf),
-            "liveness_score": liveness_score,
+            "liveness_score": float(liveness_score),
             "employee_id": emp_id,
             "timestamp": server_time,
+            "landmarks_count": len(kps) if kps is not None else 0,
             "landmarks": kps.tolist() if kps is not None else []
         }
     except Exception as e:
@@ -342,18 +341,17 @@ def generate_frames(camera_id: int, db_session_factory):
         
         # Perform recognition every N frames
         if frame_count % skip_frames == 0:
-            results = face_service.recognize_faces(frame)
+            results = face_service.recognize_faces(frame, use_liveness=True, db=db)
             last_results = results
         
         frame_count += 1
         
         # Draw bounding boxes and names
         display_frame = frame.copy()
-        for name, bbox, conf, emp_id, kps in last_results:
+        for name, bbox, conf, emp_id, kps, liveness_score in last_results:
             x1, y1, x2, y2 = map(int, bbox)
             
-            # Calculate liveness score (v1.6.0)
-            liveness_score = face_service.calculate_liveness_score(frame, bbox)
+            # Use liveness score from recognition
             is_real = liveness_score > 0.4  # v1.6.5: Reduced from 0.5 for less sensitivity
             
             # Color: Green if real and high confidence, Red if spoof or low confidence

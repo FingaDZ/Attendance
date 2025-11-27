@@ -9,9 +9,12 @@
 
 ---
 
+**Current Version:** v1.9.4
+**Last Updated:** 2025-11-27
+
 ## 🚀 Quick Deployment (Recommended)
 
-We have provided a script to automate the deployment process for v1.8.0.
+We have provided a script to automate the deployment process.
 
 1. **Clone the repository:**
    ```bash

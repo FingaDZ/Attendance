@@ -62,7 +62,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                 </nav>
                 <div className="p-4 border-t border-gray-800 text-xs text-gray-500 flex flex-col items-center space-y-1">
                     <div className="flex justify-between w-full">
-                        <span>v1.9.3</span>
+                        <span>v1.9.4</span>
                         <span>© 2025</span>
                     </div>
                     <div className="text-blue-400 font-semibold tracking-wider pt-2 opacity-80">

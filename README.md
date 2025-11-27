@@ -68,6 +68,10 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.9.4 (2025-11-27) - Camera Switch Fix
+- **Fix**: Resolved overlay canvas not clearing when switching cameras in Employee Registration.
+- **UX**: Improved camera switching experience with proper state reset.
+
 ### v1.9.3 (2025-11-27) - Enhanced Camera Support
 - **Feature**: Added Camera Selection in Employee Registration (Webcam vs RTSP).
 - **Visuals**: Optimized RTSP stream overlay (Smaller, Top-Left aligned).

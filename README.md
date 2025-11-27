@@ -65,26 +65,6 @@ See the detailed guides below:
 - **[Windows 10/11 Deployment Guide](deployment_guide_windows.md)** (For Local Testing)
 
 ---
-
-## 📋 Changelog
-
-### v1.9.4 (2025-11-27) - Clean Photo Capture
-- **Feature**: Added `/api/stream/{camera_id}/clean` endpoint for overlay-free RTSP streams.
-- **Fix**: Employee photos now capture clean frames without detection overlays.
-- **UX**: Detection overlays remain visible in LiveView but not in captured photos.
-
-### v1.9.3 (2025-11-27) - Enhanced Camera Support
-- **Feature**: Added Camera Selection in Employee Registration (Webcam vs RTSP).
-- **Visuals**: Optimized RTSP stream overlay (Smaller, Top-Left aligned).
-- **Quality**: Maintained 100% stream quality.
-
-### v1.9.2 (2025-11-27) - Visual Polish & Quality
-- **Quality**: Increased RTSP stream quality to 100% (Crystal clear).
-- **Visuals**: Added static "Nose Target" (+) in frontend overlay for consistent positioning.
-- **Cleanup**: Removed redundant backend overlays to prevent visual clutter.
-
-### v1.9.1 (2025-11-27) - Critical Stability Fix
-- **Fix**: Moved `AsyncFrameProcessor` to global scope to prevent thread explosion and memory leaks.
 - **Stability**: RTSP streaming is now robust and stable over long periods.
 
 ### v1.9.0 (2025-11-27) - Performance & Visual Overhaul

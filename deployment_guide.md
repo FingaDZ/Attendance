@@ -1,20 +1,4 @@
 # Attendance System v1.8.0 - Ubuntu 22.04 Deployment Guide
-## (With External Nginx Proxy Manager)
-
-## Server Information
-- IP: 192.168.20.56/24
-- OS: Ubuntu 22.04 LTS
-- User: root
-- External Proxy: Nginx Proxy Manager (handles HTTPS & routing)
-
----
-
-**Current Version:** v1.9.4
-**Last Updated:** 2025-11-27
-
-## 🚀 Quick Deployment (Recommended)
-
-We have provided a script to automate the deployment process.
 
 1. **Clone the repository:**
    ```bash

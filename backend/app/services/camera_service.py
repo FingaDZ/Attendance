@@ -8,6 +8,8 @@ class CameraService:
     def __init__(self):
         self.cameras = {} # id -> cv2.VideoCapture
         self.active_streams = {} # id -> bool
+        self.stream_quality = 70  # JPEG quality for web streaming (0-100)
+        self.stream_fps = 15  # Target FPS for web streaming
 
     def start_camera(self, camera_id, source):
         if camera_id in self.cameras:
@@ -18,6 +20,16 @@ class CameraService:
             source = int(source)
             
         cap = cv2.VideoCapture(source)
+        
+        # Optimize for RTSP streams
+        if isinstance(source, str) and source.startswith('rtsp'):
+            # Reduce buffer to minimize latency
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            # Set reasonable FPS (don't need 30fps for recognition)
+            cap.set(cv2.CAP_PROP_FPS, 15)
+            # Use TCP for more reliable connection (optional)
+            # cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'H264'))
+        
         if cap.isOpened():
             self.cameras[camera_id] = cap
             self.active_streams[camera_id] = True
@@ -32,6 +44,7 @@ class CameraService:
             del self.cameras[camera_id]
 
     def get_frame(self, camera_id):
+        """Get high-resolution frame for face recognition"""
         if camera_id not in self.cameras:
             return None
         
@@ -43,6 +56,49 @@ class CameraService:
             # Try to reconnect if stream is lost
             # For now, just return None
             return None
+
+    def get_frame_preview(self, camera_id, width=640, height=480):
+        """Get low-resolution frame for web streaming (optimized)"""
+        frame = self.get_frame(camera_id)
+        if frame is None:
+            return None
+        
+        # Resize to lower resolution for web streaming
+        # This significantly reduces bandwidth
+        frame_resized = cv2.resize(frame, (width, height), interpolation=cv2.INTER_LINEAR)
+        return frame_resized
+
+    def get_frame_jpeg(self, camera_id, quality=None, preview=True):
+        """
+        Get JPEG-encoded frame for MJPEG streaming
+        
+        Args:
+            camera_id: Camera ID
+            quality: JPEG quality (0-100), defaults to self.stream_quality
+            preview: If True, use low-res preview; if False, use full resolution
+        
+        Returns:
+            JPEG bytes or None
+        """
+        if quality is None:
+            quality = self.stream_quality
+            
+        # Get appropriate frame
+        if preview:
+            frame = self.get_frame_preview(camera_id)
+        else:
+            frame = self.get_frame(camera_id)
+            
+        if frame is None:
+            return None
+        
+        # Encode to JPEG with specified quality
+        encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
+        ret, buffer = cv2.imencode('.jpg', frame, encode_param)
+        
+        if ret:
+            return buffer.tobytes()
+        return None
 
     def initialize_cameras_from_db(self):
         db = SessionLocal()

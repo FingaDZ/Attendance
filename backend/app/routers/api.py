@@ -323,6 +323,30 @@ def select_camera(cam_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "selected", "camera": cam.name}
 
+@router.get("/stream/{camera_id}")
+async def stream_camera(camera_id: int):
+    """
+    MJPEG streaming endpoint optimized for RTSP cameras.
+    Provides low-latency, bandwidth-efficient streaming for web browsers.
+    """
+    def generate():
+        while True:
+            # Get JPEG-encoded frame (640x480, quality 70%)
+            frame_bytes = camera_service.get_frame_jpeg(camera_id, quality=70, preview=True)
+            
+            if frame_bytes:
+                # MJPEG format: multipart/x-mixed-replace
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            
+            # Target ~15 FPS (66ms per frame)
+            time.sleep(0.066)
+    
+    return StreamingResponse(
+        generate(),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
 # --- Streaming & Recognition ---
 
 def generate_frames(camera_id: int, db_session_factory):

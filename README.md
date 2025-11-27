@@ -62,6 +62,12 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.8.1 (2025-11-27) - MJPEG Streaming Optimization
+- **New**: Added optimized MJPEG streaming endpoint `/api/stream/{camera_id}` for RTSP cameras.
+- **Optimization**: Dual-resolution support (high-res for recognition, low-res for web streaming).
+- **Optimization**: RTSP buffer reduction and FPS limiting to minimize latency.
+- **Performance**: Reduced bandwidth usage by ~70% for web streaming (640x480 @ 70% JPEG quality).
+
 ### v1.8.0.1 (2025-11-27) - Patch
 - **Fix**: Added `mediapipe` to `requirements.txt` for automated installation.
 - **Docs**: Updated deployment guides with explicit MediaPipe installation steps.

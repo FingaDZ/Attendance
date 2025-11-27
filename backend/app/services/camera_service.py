@@ -78,7 +78,7 @@ class CameraStream:
 class CameraService:
     def __init__(self):
         self.cameras = {} # id -> CameraStream
-        self.stream_quality = 85
+        self.stream_quality = 90
         self.stream_fps = 15
 
     def start_camera(self, camera_id, source):
@@ -106,7 +106,7 @@ class CameraService:
         
         return self.cameras[camera_id].read()
 
-    def get_frame_preview(self, camera_id, width=640, height=480):
+    def get_frame_preview(self, camera_id, width=800, height=600):
         """Get low-resolution frame for web streaming (optimized)"""
         frame = self.get_frame(camera_id)
         if frame is None:
@@ -117,7 +117,7 @@ class CameraService:
 
     def get_frame_jpeg(self, camera_id, quality=None, preview=True):
         if quality is None:
-            quality = self.stream_quality
+            quality = 90  # Increased default quality to 90%
             
         if preview:
             frame = self.get_frame_preview(camera_id)

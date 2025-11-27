@@ -10,6 +10,8 @@ from .liveness_service import get_liveness_service
 from .adaptive_training_service import adaptive_training_service
 # from .ensemble_service import ensemble_service
 
+import threading
+
 class FaceService:
     def __init__(self):
         # Initialize InsightFace with 106 landmarks support
@@ -29,6 +31,9 @@ class FaceService:
         self.liveness_service = get_liveness_service(landmark_service)
         self.adaptive_training_service = adaptive_training_service
         # self.ensemble_service = ensemble_service
+        
+        # Thread lock for thread-safe recognition (MediaPipe is not thread-safe)
+        self.lock = threading.Lock()
 
     def load_embeddings(self, db_employees):
         """Load all 6 embeddings from database into memory for fast lookup."""
@@ -293,7 +298,18 @@ class FaceService:
     def recognize_faces(self, frame, use_liveness=True, db=None):
         """
         Detect and recognize faces in a frame with enhanced landmarks and liveness detection.
-        Returns list of (name, bbox, confidence, employee_id, landmarks, liveness_score)
+        Thread-safe implementation to prevent MediaPipe concurrency issues.
+        """
+        # Acquire lock to prevent concurrent access to MediaPipe/InsightFace
+        # This is CRITICAL when multiple threads (streaming + detection) access the same resources
+        with self.lock:
+            try:
+                faces = self.app.get(frame)
+            except Exception as e:
+                print(f"Error in face detection: {e}")
+                return []
+        
+        return self.process_faces(frame, faces, use_liveness, db)
         
         Args:
             frame: Image frame

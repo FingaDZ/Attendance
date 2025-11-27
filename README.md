@@ -68,6 +68,12 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.8.4 (2025-11-27) - Detection & Quality Boost
+- **Fix**: Added thread lock to `FaceService` to prevent MediaPipe crashes during concurrent streaming/detection.
+- **Quality**: Increased MJPEG resolution to **800x600** (was 640x480).
+- **Quality**: Boosted JPEG quality to **90%** for sharper details.
+- **Fix**: Resolved syntax error in service initialization.
+
 ### v1.8.3 (2025-11-27) - Robust RTSP & Threading Fix
 - **Fix**: Implemented threaded frame capture (`CameraStream`) to solve concurrency issues.
 - **Fix**: Resolved race condition between streaming and detection loops.

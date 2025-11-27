@@ -299,17 +299,6 @@ class FaceService:
         """
         Detect and recognize faces in a frame with enhanced landmarks and liveness detection.
         Thread-safe implementation to prevent MediaPipe concurrency issues.
-        """
-        # Acquire lock to prevent concurrent access to MediaPipe/InsightFace
-        # This is CRITICAL when multiple threads (streaming + detection) access the same resources
-        with self.lock:
-            try:
-                faces = self.app.get(frame)
-            except Exception as e:
-                print(f"Error in face detection: {e}")
-                return []
-        
-        return self.process_faces(frame, faces, use_liveness, db)
         
         Args:
             frame: Image frame
@@ -319,7 +308,15 @@ class FaceService:
         # Normalize input frame
         frame = self.normalize_image(frame)
         
-        faces = self.app.get(frame)
+        # Acquire lock to prevent concurrent access to MediaPipe/InsightFace
+        # This is CRITICAL when multiple threads (streaming + detection) access the same resources
+        with self.lock:
+            try:
+                faces = self.app.get(frame)
+            except Exception as e:
+                print(f"Error in face detection: {e}")
+                return []
+        
         results = []
 
         if len(self.known_embeddings) == 0:
@@ -363,16 +360,6 @@ class FaceService:
 
             # Calculate adaptive threshold based on liveness
             threshold = self.calculate_adaptive_threshold(liveness_score)
-            
-            # --- Ensemble Method (Phase 3) - DISABLED due to dependency conflicts ---
-            # if max_sim < threshold and max_sim > (threshold - 0.10):
-            #     face_crop = self.crop_face_region(frame, face.bbox, margin=0.0)
-            #     is_verified, dist = self.ensemble_service.verify_identity(face_crop, self.known_ids[max_sim_idx])
-            #     if is_verified:
-            #         print(f"✨ Ensemble Rescue: InsightFace {max_sim:.4f} -> DeepFace Verified (Dist: {dist:.4f})")
-            #         max_sim = threshold + 0.02
-            #     else:
-            #         print(f"🚫 Ensemble Reject: InsightFace {max_sim:.4f} -> DeepFace Rejected (Dist: {dist:.4f})")
             
             if max_sim > threshold:
                 name = self.known_names[max_sim_idx]
@@ -464,31 +451,6 @@ class FaceService:
             
         return True, "Quality OK"
 
-    def process_profile_image(self, image_bytes):
-        """
-        Process the image: Keep face in color, make background grayscale.
-        Returns processed image bytes.
-        """
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        # Calculate circle parameters
-        x1, y1, x2, y2 = map(int, face.bbox)
-        center_x = (x1 + x2) // 2
-        center_y = (y1 + y2) // 2
-        # Radius is half the diagonal of the bbox, or just half max dim
-        radius = int(max(x2-x1, y2-y1) * 0.6) # Slightly larger than face
-        
-        cv2.circle(mask, (center_x, center_y), radius, 255, -1)
-        
-        # Convert to grayscale
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        gray_bgr = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
-        
-        # Combine
-        # Where mask is 255 (white), use img. Where 0 (black), use gray_bgr
-        result = np.where(mask[:, :, None] == 255, img, gray_bgr)
-        
-        # Encode back to bytes
-        ret, buffer = cv2.imencode('.jpg', result)
-        return buffer.tobytes()
+
 
 face_service = FaceService()

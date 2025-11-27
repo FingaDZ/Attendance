@@ -285,8 +285,14 @@ const LiveView = () => {
                 {/* Overlay */}
                 <div className="absolute inset-0 pointer-events-none">
                     {/* Oval Positioning Guide - Responsive */}
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                        <div className="border-4 border-white border-opacity-40 rounded-full w-[60vw] h-[40vh] md:w-[min(70vw,448px)] md:h-[min(85vh,560px)]"></div>
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+                        <div className="border-4 border-white border-opacity-40 rounded-full w-[60vw] h-[40vh] md:w-[min(70vw,448px)] md:h-[min(85vh,560px)] relative">
+                            {/* Static Center Crosshair (+) */}
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-8 h-8 opacity-60">
+                                <div className="absolute top-1/2 left-0 w-full h-1 bg-cyan-400 -translate-y-1/2"></div>
+                                <div className="absolute left-1/2 top-0 h-full w-1 bg-cyan-400 -translate-x-1/2"></div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Recognition Status Overlay */}

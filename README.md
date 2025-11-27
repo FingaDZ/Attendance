@@ -68,6 +68,11 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.9.2 (2025-11-27) - Visual Polish & Quality
+- **Quality**: Increased RTSP stream quality to 100% (Crystal clear).
+- **Visuals**: Added static "Nose Target" (+) in frontend overlay for consistent positioning.
+- **Cleanup**: Removed redundant backend overlays to prevent visual clutter.
+
 ### v1.9.1 (2025-11-27) - Critical Stability Fix
 - **Fix**: Moved `AsyncFrameProcessor` to global scope to prevent thread explosion and memory leaks.
 - **Stability**: RTSP streaming is now robust and stable over long periods.

@@ -458,15 +458,10 @@ class FaceService:
         Draw detection results on the frame.
         results: list of (name, bbox, confidence, emp_id, landmarks, liveness)
         """
-        # 1. Draw Static Oval Guide (White, semi-transparent look)
+        # 1. Draw Static Oval Guide -> REMOVED (Handled by Frontend CSS)
         h, w = frame.shape[:2]
         center_x, center_y = w // 2, h // 2
-        axis_x, axis_y = int(w * 0.35), int(h * 0.45) # Approx 70% width, 90% height
         
-        # Draw oval (simulating transparency with thin lines or dotted? OpenCV doesn't do alpha blending easily on existing frame without overlay)
-        # We will draw a simple white oval
-        cv2.ellipse(frame, (center_x, center_y), (axis_x, axis_y), 0, 0, 360, (255, 255, 255), 2)
-
         if not results:
             return frame
 
@@ -479,58 +474,53 @@ class FaceService:
         # Determine Status Style
         if name == "Positioning...":
             color = (0, 165, 255) # Orange (BGR)
-            text = "Position your face in the circle"
+            text = "Position your face"
             subtext = "Center your face"
-            icon_text = "!"
         elif conf < 0.85:
             color = (0, 0, 255) # Red
             text = f"Precision: {conf:.0%}"
             subtext = "Minimum: 85%"
-            icon_text = "X"
         else:
             color = (0, 255, 0) # Green
             text = name
             subtext = "Verified"
-            icon_text = "V"
 
         # Draw Centered Badge (simulating the React overlay)
         # Badge Background
-        badge_w, badge_h = 400, 80
+        badge_w, badge_h = 400, 90
         bx1 = center_x - badge_w // 2
-        by1 = center_y - badge_h // 2
         
-        # If verified, show in center. If positioning, show top.
+        # Position: If verified/positioning, center. If low confidence, top (to not obscure face?)
+        # Actually frontend puts "Positioning" at top, "Verified" at center, "Low Conf" at top.
         if name == "Positioning..." or conf < 0.85:
              # Top position
              by1 = 50
-             by2 = by1 + badge_h
         else:
              # Center position
              by1 = center_y - badge_h // 2
-             by2 = by1 + badge_h
 
+        by2 = by1 + badge_h
         bx2 = bx1 + badge_w
         
-        # Draw filled rectangle (Badge)
-        # Create overlay for transparency
+        # Draw filled rectangle (Badge) with rounded corners simulation (just rect for now)
         overlay = frame.copy()
         cv2.rectangle(overlay, (bx1, by1), (bx2, by2), color, -1)
-        alpha = 0.7
+        alpha = 0.85 # Higher opacity to match frontend
         cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
         
         # Draw Text
         font = cv2.FONT_HERSHEY_SIMPLEX
         # Main Text
-        text_size = cv2.getTextSize(text, font, 1.0, 2)[0]
+        text_size = cv2.getTextSize(text, font, 1.1, 2)[0]
         tx = center_x - text_size[0] // 2
-        ty = by1 + 40
-        cv2.putText(frame, text, (tx, ty), font, 1.0, (255, 255, 255), 2)
+        ty = by1 + 45
+        cv2.putText(frame, text, (tx, ty), font, 1.1, (255, 255, 255), 2)
         
         # Subtext
-        subtext_size = cv2.getTextSize(subtext, font, 0.6, 1)[0]
+        subtext_size = cv2.getTextSize(subtext, font, 0.7, 1)[0]
         stx = center_x - subtext_size[0] // 2
-        sty = ty + 25
-        cv2.putText(frame, subtext, (stx, sty), font, 0.6, (230, 230, 230), 1)
+        sty = ty + 30
+        cv2.putText(frame, subtext, (stx, sty), font, 0.7, (230, 230, 230), 1)
 
         # Draw Landmarks for all faces
         for res in results:
@@ -538,13 +528,7 @@ class FaceService:
             if kps is not None:
                 for point in kps:
                     x, y = point[:2]
-                    cv2.circle(frame, (int(x), int(y)), 1, (255, 255, 0), -1) # Cyan
-                
-                # Nose Tip (+)
-                if len(kps) > 1:
-                    nx, ny = kps[1][:2]
-                    cv2.line(frame, (int(nx) - 8, int(ny)), (int(nx) + 8, int(ny)), (0, 255, 255), 2) # Yellow/Cyan mix
-                    cv2.line(frame, (int(nx), int(ny) - 8), (int(nx), int(ny) + 8), (0, 255, 255), 2)
+                    cv2.circle(frame, (int(x), int(y)), 2, (255, 255, 0), -1) # Cyan, slightly larger dots
 
         return frame
 

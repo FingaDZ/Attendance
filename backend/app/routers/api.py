@@ -410,7 +410,7 @@ async def stream_camera(camera_id: int):
                     print(f"Drawing error: {e}")
                 
                 # Encode to JPEG
-                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
                 
                 if ret:
                     frame_bytes = buffer.tobytes()

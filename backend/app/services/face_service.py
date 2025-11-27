@@ -458,40 +458,93 @@ class FaceService:
         Draw detection results on the frame.
         results: list of (name, bbox, confidence, emp_id, landmarks, liveness)
         """
+        # 1. Draw Static Oval Guide (White, semi-transparent look)
+        h, w = frame.shape[:2]
+        center_x, center_y = w // 2, h // 2
+        axis_x, axis_y = int(w * 0.35), int(h * 0.45) # Approx 70% width, 90% height
+        
+        # Draw oval (simulating transparency with thin lines or dotted? OpenCV doesn't do alpha blending easily on existing frame without overlay)
+        # We will draw a simple white oval
+        cv2.ellipse(frame, (center_x, center_y), (axis_x, axis_y), 0, 0, 360, (255, 255, 255), 2)
+
+        if not results:
+            return frame
+
+        # We only care about the primary face (closest to center or largest) for the main status badge
+        # But we will draw landmarks for all.
+        
+        primary_result = results[0] # Assume first is primary/largest
+        name, bbox, conf, _, kps, liveness = primary_result
+        
+        # Determine Status Style
+        if name == "Positioning...":
+            color = (0, 165, 255) # Orange (BGR)
+            text = "Position your face in the circle"
+            subtext = "Center your face"
+            icon_text = "!"
+        elif conf < 0.85:
+            color = (0, 0, 255) # Red
+            text = f"Precision: {conf:.0%}"
+            subtext = "Minimum: 85%"
+            icon_text = "X"
+        else:
+            color = (0, 255, 0) # Green
+            text = name
+            subtext = "Verified"
+            icon_text = "V"
+
+        # Draw Centered Badge (simulating the React overlay)
+        # Badge Background
+        badge_w, badge_h = 400, 80
+        bx1 = center_x - badge_w // 2
+        by1 = center_y - badge_h // 2
+        
+        # If verified, show in center. If positioning, show top.
+        if name == "Positioning..." or conf < 0.85:
+             # Top position
+             by1 = 50
+             by2 = by1 + badge_h
+        else:
+             # Center position
+             by1 = center_y - badge_h // 2
+             by2 = by1 + badge_h
+
+        bx2 = bx1 + badge_w
+        
+        # Draw filled rectangle (Badge)
+        # Create overlay for transparency
+        overlay = frame.copy()
+        cv2.rectangle(overlay, (bx1, by1), (bx2, by2), color, -1)
+        alpha = 0.7
+        cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+        
+        # Draw Text
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        # Main Text
+        text_size = cv2.getTextSize(text, font, 1.0, 2)[0]
+        tx = center_x - text_size[0] // 2
+        ty = by1 + 40
+        cv2.putText(frame, text, (tx, ty), font, 1.0, (255, 255, 255), 2)
+        
+        # Subtext
+        subtext_size = cv2.getTextSize(subtext, font, 0.6, 1)[0]
+        stx = center_x - subtext_size[0] // 2
+        sty = ty + 25
+        cv2.putText(frame, subtext, (stx, sty), font, 0.6, (230, 230, 230), 1)
+
+        # Draw Landmarks for all faces
         for res in results:
-            name, bbox, conf, _, kps, liveness = res
-            x1, y1, x2, y2 = map(int, bbox)
-            
-            # Color based on confidence
-            color = (0, 255, 0) if conf > 0.85 else (0, 0, 255)
-            
-            # Draw BBox
-            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-            
-            # Draw Name & Confidence
-            label = f"{name} ({conf:.0%})"
-            cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
-            
-            # Draw Liveness
-            if liveness > 0:
-                liveness_label = f"Live: {liveness:.0%}"
-                cv2.putText(frame, liveness_label, (x1, y2 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
-            
-            # Draw Landmarks (if available)
+            _, _, _, _, kps, _ = res
             if kps is not None:
-                # Draw a subset of landmarks for performance and clarity
-                # or all if fast enough. Let's draw key points.
-                # Draw all points as small dots
                 for point in kps:
                     x, y = point[:2]
-                    cv2.circle(frame, (int(x), int(y)), 1, (0, 255, 255), -1)
+                    cv2.circle(frame, (int(x), int(y)), 1, (255, 255, 0), -1) # Cyan
                 
-                # Draw Nose Tip (+) specifically (Index 1 in MediaPipe)
+                # Nose Tip (+)
                 if len(kps) > 1:
                     nx, ny = kps[1][:2]
-                    # Draw a cyan cross (+)
-                    cv2.line(frame, (int(nx) - 5, int(ny)), (int(nx) + 5, int(ny)), (255, 255, 0), 2)
-                    cv2.line(frame, (int(nx), int(ny) - 5), (int(nx), int(ny) + 5), (255, 255, 0), 2)
+                    cv2.line(frame, (int(nx) - 8, int(ny)), (int(nx) + 8, int(ny)), (0, 255, 255), 2) # Yellow/Cyan mix
+                    cv2.line(frame, (int(nx), int(ny) - 8), (int(nx), int(ny) + 8), (0, 255, 255), 2)
 
         return frame
 

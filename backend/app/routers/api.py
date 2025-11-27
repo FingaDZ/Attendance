@@ -329,53 +329,96 @@ async def stream_camera(camera_id: int):
     MJPEG streaming endpoint optimized for RTSP cameras.
     Provides low-latency, bandwidth-efficient streaming for web browsers.
     """
-    def generate():
-        # Decoupled rendering state
-        last_results = []
-        frame_count = 0
-        skip_frames = 2  # Detect every 3rd frame (0, 3, 6...)
-        
-        # Create a local session for logging/training
+    # --- Async Detection Helper ---
+class AsyncFrameProcessor:
+    def __init__(self, camera_id):
+        self.camera_id = camera_id
+        self.latest_frame = None
+        self.latest_results = []
+        self.running = True
+        self.lock = threading.Lock()
+        self.thread = threading.Thread(target=self._detection_loop, daemon=True)
+        self.thread.start()
+
+    def update_frame(self, frame):
+        with self.lock:
+            self.latest_frame = frame.copy()
+
+    def get_results(self):
+        with self.lock:
+            return self.latest_results
+
+    def stop(self):
+        self.running = False
+        self.thread.join(timeout=1.0)
+
+    def _detection_loop(self):
+        # Create a dedicated DB session for this thread
         db = SessionLocal()
-        
         try:
-            while True:
-                # Get raw frame (800x600)
-                frame = camera_service.get_frame_preview(camera_id, width=800, height=600)
+            while self.running:
+                frame_to_process = None
+                with self.lock:
+                    if self.latest_frame is not None:
+                        frame_to_process = self.latest_frame.copy()
                 
-                if frame is None:
-                    time.sleep(0.1)
-                    continue
+                if frame_to_process is not None:
+                    # Run detection (heavy operation)
+                    results = face_service.recognize_faces(frame_to_process, use_liveness=True, db=db)
+                    with self.lock:
+                        self.latest_results = results
                 
-                # Run recognition periodically
-                if frame_count % (skip_frames + 1) == 0:
-                    # Run detection in a way that doesn't block too long?
-                    # Since we are in a generator, we can't easily offload to another thread 
-                    # without complex management. But FaceService is now thread-safe.
-                    # We accept that THIS frame might take longer to generate, 
-                    # but the client (browser) will just wait a bit.
-                    # With threaded capture, we are not blocking the camera.
-                    results = face_service.recognize_faces(frame, use_liveness=True, db=db)
-                    last_results = results
-                
-                # Always draw the LATEST results on the CURRENT frame
-                # This creates a smooth video even if detection is 5 FPS
-                if last_results:
-                    frame = face_service.draw_results(frame, last_results)
-                
-                # Encode to JPEG
-                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
-                
-                if ret:
-                    frame_bytes = buffer.tobytes()
-                    yield (b'--frame\r\n'
-                           b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-                
-                frame_count += 1
-                # Target ~15 FPS
-                time.sleep(0.066)
+                # Sleep to limit detection FPS (e.g., 5 FPS)
+                time.sleep(0.2) 
+        except Exception as e:
+            print(f"Detection thread error: {e}")
         finally:
             db.close()
+
+# Global processors cache
+processors = {}
+
+def generate():
+    # Ensure we have a processor for this camera
+    if camera_id not in processors:
+        processors[camera_id] = AsyncFrameProcessor(camera_id)
+    
+    processor = processors[camera_id]
+    
+    try:
+        while True:
+            # Get raw frame (800x600)
+            frame = camera_service.get_frame_preview(camera_id, width=800, height=600)
+            
+            if frame is None:
+                time.sleep(0.1)
+                continue
+            
+            # Feed frame to async detector
+            processor.update_frame(frame)
+            
+            # Get latest available results (instant)
+            results = processor.get_results()
+            
+            # Draw results on the current frame
+            # This is fast because drawing is cheap compared to detection
+            frame = face_service.draw_results(frame, results)
+            
+            # Encode to JPEG
+            ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+            
+            if ret:
+                frame_bytes = buffer.tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            
+            # Target 15 FPS for video smoothness
+            time.sleep(0.066)
+    except GeneratorExit:
+        # Cleanup if client disconnects (optional, or keep running for shared state)
+        pass
+    except Exception as e:
+        print(f"Stream error: {e}")
     
     return StreamingResponse(
         generate(),

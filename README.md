@@ -68,6 +68,12 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.9.0 (2025-11-27) - Performance & Visual Overhaul
+- **Optimization**: Implemented **Async Threaded Detection** for RTSP streams. Video now runs smoothly at 15 FPS while detection runs in the background (no more lag/stutter).
+- **Visuals**: Updated RTSP overlay to match the Frontend/Webcam style (Static Oval Guide, Centered Status Badges, Cyan Landmarks).
+- **Feature**: Added "Nose Tip" (+) marker for better positioning feedback.
+- **Fix**: Resolved all previous crash issues (NameError, ValueError).
+
 ### v1.8.8 (2025-11-27) - Stability Fixes
 - **Fix**: Resolved `ValueError` in landmark drawing (handling 3D points).
 - **Fix**: Resolved `NameError` in RTSP stream (SessionLocal import).

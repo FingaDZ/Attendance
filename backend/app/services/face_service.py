@@ -485,42 +485,27 @@ class FaceService:
             text = name
             subtext = "Verified"
 
-        # Draw Centered Badge (simulating the React overlay)
+        # Draw Top-Left Badge (Smaller, 50% size)
         # Badge Background
-        badge_w, badge_h = 400, 90
-        bx1 = center_x - badge_w // 2
-        
-        # Position: If verified/positioning, center. If low confidence, top (to not obscure face?)
-        # Actually frontend puts "Positioning" at top, "Verified" at center, "Low Conf" at top.
-        if name == "Positioning..." or conf < 0.85:
-             # Top position
-             by1 = 50
-        else:
-             # Center position
-             by1 = center_y - badge_h // 2
-
-        by2 = by1 + badge_h
+        badge_w, badge_h = 220, 50 # Reduced from 400x90
+        bx1 = 20 # 20px padding from left
+        by1 = 20 # 20px padding from top
         bx2 = bx1 + badge_w
+        by2 = by1 + badge_h
         
-        # Draw filled rectangle (Badge) with rounded corners simulation (just rect for now)
+        # Draw filled rectangle (Badge)
         overlay = frame.copy()
         cv2.rectangle(overlay, (bx1, by1), (bx2, by2), color, -1)
-        alpha = 0.85 # Higher opacity to match frontend
+        alpha = 0.85
         cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
         
         # Draw Text
         font = cv2.FONT_HERSHEY_SIMPLEX
         # Main Text
-        text_size = cv2.getTextSize(text, font, 1.1, 2)[0]
-        tx = center_x - text_size[0] // 2
-        ty = by1 + 45
-        cv2.putText(frame, text, (tx, ty), font, 1.1, (255, 255, 255), 2)
+        cv2.putText(frame, text, (bx1 + 10, by1 + 25), font, 0.6, (255, 255, 255), 1)
         
         # Subtext
-        subtext_size = cv2.getTextSize(subtext, font, 0.7, 1)[0]
-        stx = center_x - subtext_size[0] // 2
-        sty = ty + 30
-        cv2.putText(frame, subtext, (stx, sty), font, 0.7, (230, 230, 230), 1)
+        cv2.putText(frame, subtext, (bx1 + 10, by1 + 42), font, 0.45, (230, 230, 230), 1)
 
         # Draw Landmarks for all faces
         for res in results:

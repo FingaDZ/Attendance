@@ -25,10 +25,37 @@ const Employees = () => {
     const [stream, setStream] = useState(null);
     const [capturedImages, setCapturedImages] = useState([null, null, null, null, null, null]); // v1.6.5
     const videoRef = useRef(null);
+    const imgRef = useRef(null); // For RTSP stream
     const canvasRef = useRef(null);
     const overlayCanvasRef = useRef(null); // New overlay canvas
     const [faceDetected, setFaceDetected] = useState(false); // Validation state
     const [currentResults, setCurrentResults] = useState([]); // For landmarks
+
+    // Camera Selection
+    const [cameras, setCameras] = useState([]);
+    const [selectedCamera, setSelectedCamera] = useState(null);
+
+    useEffect(() => {
+        const getCameras = async () => {
+            try {
+                const res = await api.get('/cameras/');
+                setCameras(res.data);
+                // Default to webcam (source '0') or first available
+                const defaultCam = res.data.find(c => c.source === '0') || res.data[0];
+                setSelectedCamera(defaultCam);
+            } catch (err) {
+                console.error("Failed to fetch cameras", err);
+            }
+        };
+        getCameras();
+    }, []);
+
+    // Effect to restart camera if selection changes while modal is open
+    useEffect(() => {
+        if (showCamera && selectedCamera) {
+            startCamera(currentPhotoStep);
+        }
+    }, [selectedCamera]);
 
     const fetchEmployees = async () => {
         try {
@@ -50,10 +77,14 @@ const Employees = () => {
     }, []);
 
     // Draw landmarks
+    // Draw landmarks
     useEffect(() => {
         const canvas = overlayCanvasRef.current;
         const video = videoRef.current;
-        if (!canvas || !video || currentResults.length === 0) {
+        const img = imgRef.current;
+        const source = selectedCamera?.source === '0' ? video : img;
+
+        if (!canvas || !source || currentResults.length === 0) {
             if (canvas) {
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -65,8 +96,12 @@ const Employees = () => {
         if (!result.landmarks || result.landmarks.length === 0) return;
 
         const ctx = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        // For video, use videoWidth; for img, use naturalWidth or width
+        const width = source.videoWidth || source.naturalWidth || source.width;
+        const height = source.videoHeight || source.naturalHeight || source.height;
+
+        canvas.width = width;
+        canvas.height = height;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Draw landmarks
@@ -76,7 +111,7 @@ const Employees = () => {
             ctx.arc(x, y, 2, 0, 2 * Math.PI);
             ctx.fill();
         });
-    }, [currentResults]);
+    }, [currentResults, selectedCamera]);
 
     const handleFileChange = (e, photoIndex) => {
         const newFiles = [...selectedFiles];
@@ -93,17 +128,36 @@ const Employees = () => {
         const newCaptured = [...capturedImages];
         newCaptured[photoIndex] = null;
         setCapturedImages(newCaptured);
-        try {
-            const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-            setStream(mediaStream);
-            if (videoRef.current) {
-                videoRef.current.srcObject = mediaStream;
+
+        // Stop any existing stream first
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            setStream(null);
+        }
+
+        // Clear interval if running
+        if (videoRef.current && videoRef.current._recognitionInterval) {
+            clearInterval(videoRef.current._recognitionInterval);
+        }
+
+        if (selectedCamera && selectedCamera.source !== '0') {
+            // RTSP Mode: Just start recognition loop (image loads via src)
+            // Give a moment for image to load?
+            setTimeout(() => startRecognitionLoop(), 1000);
+        } else {
+            // Webcam Mode
+            try {
+                const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                setStream(mediaStream);
+                if (videoRef.current) {
+                    videoRef.current.srcObject = mediaStream;
+                }
+                startRecognitionLoop(); // Start detecting faces
+            } catch (err) {
+                console.error("Error accessing camera:", err);
+                alert("Could not access camera");
+                setShowCamera(false);
             }
-            startRecognitionLoop(); // Start detecting faces
-        } catch (err) {
-            console.error("Error accessing camera:", err);
-            alert("Could not access camera");
-            setShowCamera(false);
         }
     };
 
@@ -112,17 +166,28 @@ const Employees = () => {
         let isProcessing = false;
         const interval = setInterval(async () => {
             if (isProcessing) return;
-            if (videoRef.current && canvasRef.current && !videoRef.current.paused && !videoRef.current.ended) {
+
+            let source = null;
+            if (selectedCamera?.source === '0') source = videoRef.current;
+            else source = imgRef.current;
+
+            if (source && canvasRef.current) {
+                // Check if source is ready
+                if (selectedCamera?.source === '0') {
+                    if (source.paused || source.ended) return;
+                } else {
+                    if (!source.complete || source.naturalWidth === 0) return;
+                }
+
                 isProcessing = true;
 
-                // Use a temporary canvas for capture to avoid messing with the main one? 
-                // Actually we can reuse canvasRef but we need to be careful not to draw over it if it's used for display.
-                // In this component, canvasRef is hidden (className="hidden"), so it's safe to use for processing.
-
                 const context = canvasRef.current.getContext('2d');
-                canvasRef.current.width = videoRef.current.videoWidth;
-                canvasRef.current.height = videoRef.current.videoHeight;
-                context.drawImage(videoRef.current, 0, 0);
+                const width = source.videoWidth || source.naturalWidth;
+                const height = source.videoHeight || source.naturalHeight;
+
+                canvasRef.current.width = width;
+                canvasRef.current.height = height;
+                context.drawImage(source, 0, 0, width, height);
 
                 canvasRef.current.toBlob(async (blob) => {
                     if (!blob) { isProcessing = false; return; }
@@ -152,10 +217,13 @@ const Employees = () => {
             }
         }, 500); // Check every 500ms
 
-        // Store interval ID on the video element or a ref to clear it later?
-        // Since we don't have a ref for the interval, we'll attach it to the videoRef.current for now or use a separate ref.
-        // Better: use a ref.
-        videoRef.current._recognitionInterval = interval;
+        // Store interval ID
+        if (videoRef.current) {
+            videoRef.current._recognitionInterval = interval;
+        } else {
+            // Fallback storage if videoRef is null (RTSP mode)
+            window._recognitionInterval = interval;
+        }
     };
 
     const stopCamera = () => {
@@ -171,13 +239,19 @@ const Employees = () => {
     };
 
     const takePhoto = () => {
-        if (videoRef.current && canvasRef.current) {
-            const video = videoRef.current;
+        let source = null;
+        if (selectedCamera?.source === '0') source = videoRef.current;
+        else source = imgRef.current;
+
+        if (source && canvasRef.current) {
             const canvas = canvasRef.current;
 
-            // Match canvas size to video stream to prevent distortion
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            // Match canvas size to source
+            const width = source.videoWidth || source.naturalWidth;
+            const height = source.videoHeight || source.naturalHeight;
+
+            canvas.width = width;
+            canvas.height = height;
 
             const context = canvas.getContext('2d');
 
@@ -188,7 +262,7 @@ const Employees = () => {
                 context.filter = 'none';
             }
 
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            context.drawImage(source, 0, 0, width, height);
             context.filter = 'none'; // Reset filter
             const dataUrl = canvas.toDataURL('image/jpeg');
             const newCaptured = [...capturedImages];
@@ -633,15 +707,43 @@ const Employees = () => {
                                         {currentPhotoStep === 2 && "Move closer for high-detail color capture."}
                                     </p>
                                 </div>
+                                <div className="mb-4 w-full max-w-xs">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Camera</label>
+                                    <select
+                                        value={selectedCamera?.id || ''}
+                                        onChange={(e) => {
+                                            const cam = cameras.find(c => c.id == e.target.value);
+                                            setSelectedCamera(cam);
+                                        }}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                    >
+                                        {cameras.map(cam => (
+                                            <option key={cam.id} value={cam.id}>
+                                                {cam.name} {cam.source === '0' ? '(Webcam)' : '(RTSP)'}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
                                 <div className="relative w-full bg-black rounded-lg overflow-hidden aspect-video mb-4">
                                     {!capturedImages[currentPhotoStep] ? (
                                         <>
-                                            <video
-                                                ref={videoRef}
-                                                autoPlay
-                                                playsInline
-                                                className={`w-full h-full object-contain ${currentPhotoStep === 1 ? 'grayscale' : ''}`}
-                                            />
+                                            {selectedCamera?.source === '0' ? (
+                                                <video
+                                                    ref={videoRef}
+                                                    autoPlay
+                                                    playsInline
+                                                    className={`w-full h-full object-contain ${currentPhotoStep === 1 ? 'grayscale' : ''}`}
+                                                />
+                                            ) : (
+                                                <img
+                                                    ref={imgRef}
+                                                    src={`/api/stream/${selectedCamera?.id}`}
+                                                    className={`w-full h-full object-contain ${currentPhotoStep === 1 ? 'grayscale' : ''}`}
+                                                    alt="RTSP Stream"
+                                                    crossOrigin="anonymous"
+                                                />
+                                            )}
                                             <canvas
                                                 ref={overlayCanvasRef}
                                                 className="absolute inset-0 w-full h-full pointer-events-none"

@@ -23,19 +23,6 @@ We have provided a script to automate the deployment process for v1.8.0.
 2. **Run the deployment script:**
    ```bash
    chmod +x deploy_ubuntu.sh
-   ./deploy_ubuntu.sh
-   ```
-
-This script handles:
-- Pulling the latest code.
-- Setting up the Python 3.10 virtual environment.
-- Installing dependencies with **strict version control** (Protobuf < 5, Numpy < 2) to ensure MediaPipe stability.
-
----
-
-## 🛠️ Manual Deployment Steps
-
-If you prefer to deploy manually, follow these steps carefully.
 
 ### Step 1: Install System Dependencies
 

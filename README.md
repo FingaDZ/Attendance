@@ -68,6 +68,11 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.9.3 (2025-11-27) - Enhanced Camera Support
+- **Feature**: Added Camera Selection in Employee Registration (Webcam vs RTSP).
+- **Visuals**: Optimized RTSP stream overlay (Smaller, Top-Left aligned).
+- **Quality**: Maintained 100% stream quality.
+
 ### v1.9.2 (2025-11-27) - Visual Polish & Quality
 - **Quality**: Increased RTSP stream quality to 100% (Crystal clear).
 - **Visuals**: Added static "Nose Target" (+) in frontend overlay for consistent positioning.

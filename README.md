@@ -68,6 +68,13 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.8.3 (2025-11-27) - Robust RTSP & Threading Fix
+- **Fix**: Implemented threaded frame capture (`CameraStream`) to solve concurrency issues.
+- **Fix**: Resolved race condition between streaming and detection loops.
+- **Fix**: Face recognition now works reliably on RTSP cameras.
+- **Optimization**: Background thread ensures latest frame is always available (zero latency drift).
+- **Resilience**: Added automatic reconnection logic for lost streams.
+
 ### v1.8.2 (2025-11-27) - RTSP Quality & Latency Fix
 - **Fix**: Improved RTSP video quality (JPEG 85% vs 70%).
 - **Fix**: Reduced frame skip from 5 to 1 (better quality, ~1s latency).

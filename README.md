@@ -68,6 +68,12 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.8.2 (2025-11-27) - RTSP Quality & Latency Fix
+- **Fix**: Improved RTSP video quality (JPEG 85% vs 70%).
+- **Fix**: Reduced frame skip from 5 to 1 (better quality, ~1s latency).
+- **Fix**: Face recognition now works correctly on RTSP cameras.
+- **Optimization**: Used `cap.grab()` for efficient frame skipping.
+
 ### v1.8.1 (2025-11-27) - MJPEG Streaming Optimization
 - **New**: Added optimized MJPEG streaming endpoint `/api/stream/{camera_id}` for RTSP cameras.
 - **Optimization**: Dual-resolution support (high-res for recognition, low-res for web streaming).

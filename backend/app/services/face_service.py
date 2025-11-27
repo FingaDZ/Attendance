@@ -481,9 +481,17 @@ class FaceService:
             if kps is not None:
                 # Draw a subset of landmarks for performance and clarity
                 # or all if fast enough. Let's draw key points.
+                # Draw all points as small dots
                 for point in kps:
                     x, y = point[:2]
                     cv2.circle(frame, (int(x), int(y)), 1, (0, 255, 255), -1)
+                
+                # Draw Nose Tip (+) specifically (Index 1 in MediaPipe)
+                if len(kps) > 1:
+                    nx, ny = kps[1][:2]
+                    # Draw a cyan cross (+)
+                    cv2.line(frame, (int(nx) - 5, int(ny)), (int(nx) + 5, int(ny)), (255, 255, 0), 2)
+                    cv2.line(frame, (int(nx), int(ny) - 5), (int(nx), int(ny) + 5), (255, 255, 0), 2)
 
         return frame
 

@@ -68,6 +68,11 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.8.8 (2025-11-27) - Stability Fixes
+- **Fix**: Resolved `ValueError` in landmark drawing (handling 3D points).
+- **Fix**: Resolved `NameError` in RTSP stream (SessionLocal import).
+- **Debug**: Added logging for RTSP connection diagnosis.
+
 ### v1.8.5 (2025-11-27) - RTSP Detection & Visuals
 - **Fix**: Restored detection overlays on RTSP streams (Live View).
 - **Optimization**: Implemented decoupled rendering (smooth 15FPS video with 5FPS detection).

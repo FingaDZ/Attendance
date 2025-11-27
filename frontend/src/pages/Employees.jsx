@@ -53,14 +53,6 @@ const Employees = () => {
     // Effect to restart camera if selection changes while modal is open
     useEffect(() => {
         if (showCamera && selectedCamera) {
-            // Clear overlay canvas and reset detection state
-            setFaceDetected(false);
-            setCurrentResults([]);
-            if (overlayCanvasRef.current) {
-                const ctx = overlayCanvasRef.current.getContext('2d');
-                ctx.clearRect(0, 0, overlayCanvasRef.current.width, overlayCanvasRef.current.height);
-            }
-            // Restart camera with current photo step
             startCamera(currentPhotoStep);
         }
     }, [selectedCamera]);

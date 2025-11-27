@@ -8,7 +8,7 @@ class CameraService:
     def __init__(self):
         self.cameras = {} # id -> cv2.VideoCapture
         self.active_streams = {} # id -> bool
-        self.stream_quality = 70  # JPEG quality for web streaming (0-100)
+        self.stream_quality = 85  # JPEG quality for web streaming (increased from 70)
         self.stream_fps = 15  # Target FPS for web streaming
 
     def start_camera(self, camera_id, source):
@@ -62,17 +62,16 @@ class CameraService:
         
         cap = self.cameras[camera_id]
         
-        # CRITICAL FIX: For RTSP streams, always grab the LATEST frame
-        # Skip buffered frames to prevent 10-second delays
-        # This is essential for real-time recognition
-        for _ in range(5):  # Flush buffer by reading multiple frames
-            ret, frame = cap.read()
+        # For RTSP streams: Skip only 1 buffered frame to get fresher data
+        # Balance between latency and quality
+        # 5 frames was too aggressive and caused quality issues
+        cap.grab()  # Skip 1 frame
+        ret, frame = cap.read()  # Get the next frame
         
         if ret:
             return frame
         else:
             # Try to reconnect if stream is lost
-            # For now, just return None
             return None
 
     def get_frame_preview(self, camera_id, width=640, height=480):

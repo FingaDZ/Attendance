@@ -331,8 +331,8 @@ async def stream_camera(camera_id: int):
     """
     def generate():
         while True:
-            # Get JPEG-encoded frame (640x480, quality 70%)
-            frame_bytes = camera_service.get_frame_jpeg(camera_id, quality=70, preview=True)
+            # Get JPEG-encoded frame (640x480, quality 85%)
+            frame_bytes = camera_service.get_frame_jpeg(camera_id, quality=85, preview=True)
             
             if frame_bytes:
                 # MJPEG format: multipart/x-mixed-replace

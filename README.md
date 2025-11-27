@@ -68,6 +68,10 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.9.1 (2025-11-27) - Critical Stability Fix
+- **Fix**: Moved `AsyncFrameProcessor` to global scope to prevent thread explosion and memory leaks.
+- **Stability**: RTSP streaming is now robust and stable over long periods.
+
 ### v1.9.0 (2025-11-27) - Performance & Visual Overhaul
 - **Optimization**: Implemented **Async Threaded Detection** for RTSP streams. Video now runs smoothly at 15 FPS while detection runs in the background (no more lag/stutter).
 - **Visuals**: Updated RTSP overlay to match the Frontend/Webcam style (Static Oval Guide, Centered Status Badges, Cyan Landmarks).

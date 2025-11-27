@@ -1,13 +1,3 @@
-# MJPEG Streaming Optimization Guide
-
-## 🎯 Overview
-Version 1.8.1 introduces optimized MJPEG streaming for RTSP cameras, reducing bandwidth usage by ~70% while maintaining smooth video playback.
-
-## 🚀 Features
-
-### 1. Dual-Resolution Architecture
-- **Recognition**: Full resolution (native camera resolution) for accurate face detection
-- **Web Streaming**: 640x480 @ 70% JPEG quality for efficient browser display
 
 ### 2. RTSP Optimizations
 - **Buffer Reduction**: `CAP_PROP_BUFFERSIZE = 1` for minimal latency

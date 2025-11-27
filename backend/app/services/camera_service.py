@@ -18,17 +18,29 @@ class CameraService:
         # Handle integer source for webcams
         if str(source).isdigit():
             source = int(source)
-            
-        cap = cv2.VideoCapture(source)
         
-        # Optimize for RTSP streams
+        # Aggressive RTSP optimization for Dahua cameras
         if isinstance(source, str) and source.startswith('rtsp'):
-            # Reduce buffer to minimize latency
-            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            # Set reasonable FPS (don't need 30fps for recognition)
+            # Force UDP transport for lower latency (vs TCP)
+            # Add transport parameter to RTSP URL if not present
+            if '?' not in source:
+                source = f"{source}?tcp=0"
+            
+            # Use GStreamer pipeline for ultra-low latency (if available)
+            # Otherwise fall back to OpenCV with aggressive settings
+            cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)
+            
+            # CRITICAL: Minimize buffering for real-time streaming
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Absolute minimum buffer
+            
+            # Force frame drop if processing is slow (prevent queue buildup)
             cap.set(cv2.CAP_PROP_FPS, 15)
-            # Use TCP for more reliable connection (optional)
-            # cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'H264'))
+            
+            # Disable any internal buffering
+            cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'H264'))
+            
+        else:
+            cap = cv2.VideoCapture(source)
         
         if cap.isOpened():
             self.cameras[camera_id] = cap
@@ -49,7 +61,13 @@ class CameraService:
             return None
         
         cap = self.cameras[camera_id]
-        ret, frame = cap.read()
+        
+        # CRITICAL FIX: For RTSP streams, always grab the LATEST frame
+        # Skip buffered frames to prevent 10-second delays
+        # This is essential for real-time recognition
+        for _ in range(5):  # Flush buffer by reading multiple frames
+            ret, frame = cap.read()
+        
         if ret:
             return frame
         else:

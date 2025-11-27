@@ -157,22 +157,6 @@ The system automatically updates employee profiles when:
    ```
 
 5. **Restart Services:**
-   ```bash
-   sudo systemctl start attendance-backend attendance-frontend
-   ```
-
----
-
-## 🎥 MJPEG Streaming for RTSP Cameras (v1.8.1)
-
-### Overview
-Version 1.8.1 introduces optimized MJPEG streaming specifically designed for RTSP IP cameras, reducing bandwidth by ~70% while maintaining smooth video playback.
-
-### Features
-- **Dedicated Endpoint**: `/api/stream/{camera_id}` for efficient browser streaming
-- **Dual Resolution**: Full-res for recognition, 640x480 for web display
-- **Optimized for RTSP**: Automatic buffer reduction and FPS limiting
-- **Low Latency**: ~100-300ms delay
 
 ### Usage in Frontend
 ```jsx

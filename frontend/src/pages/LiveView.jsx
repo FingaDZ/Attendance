@@ -174,9 +174,9 @@ const LiveView = () => {
                     } finally {
                         isProcessing = false;
                     }
-                }, 'image/jpeg', 0.95);
+                }, 'image/jpeg', 0.75);
             }
-        }, 2000); // Check every 2 seconds to reduce CPU load
+        }, 500); // Check every 500ms (2 FPS detection) - Optimized for faster response
 
         return () => clearInterval(interval);
     };

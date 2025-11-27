@@ -453,4 +453,37 @@ class FaceService:
 
 
 
+    def draw_results(self, frame, results):
+        """
+        Draw detection results on the frame.
+        results: list of (name, bbox, confidence, emp_id, landmarks, liveness)
+        """
+        for res in results:
+            name, bbox, conf, _, kps, liveness = res
+            x1, y1, x2, y2 = map(int, bbox)
+            
+            # Color based on confidence
+            color = (0, 255, 0) if conf > 0.85 else (0, 0, 255)
+            
+            # Draw BBox
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+            
+            # Draw Name & Confidence
+            label = f"{name} ({conf:.0%})"
+            cv2.putText(frame, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+            
+            # Draw Liveness
+            if liveness > 0:
+                liveness_label = f"Live: {liveness:.0%}"
+                cv2.putText(frame, liveness_label, (x1, y2 + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+            
+            # Draw Landmarks (if available)
+            if kps is not None:
+                # Draw a subset of landmarks for performance and clarity
+                # or all if fast enough. Let's draw key points.
+                for (x, y) in kps:
+                    cv2.circle(frame, (int(x), int(y)), 1, (0, 255, 255), -1)
+
+        return frame
+
 face_service = FaceService()

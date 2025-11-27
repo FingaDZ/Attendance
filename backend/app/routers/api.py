@@ -330,17 +330,52 @@ async def stream_camera(camera_id: int):
     Provides low-latency, bandwidth-efficient streaming for web browsers.
     """
     def generate():
-        while True:
-            # Get JPEG-encoded frame (640x480, quality 85%)
-            frame_bytes = camera_service.get_frame_jpeg(camera_id, quality=85, preview=True)
-            
-            if frame_bytes:
-                # MJPEG format: multipart/x-mixed-replace
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-            
-            # Target ~15 FPS (66ms per frame)
-            time.sleep(0.066)
+        # Decoupled rendering state
+        last_results = []
+        frame_count = 0
+        skip_frames = 2  # Detect every 3rd frame (0, 3, 6...)
+        
+        # Create a local session for logging/training
+        db = SessionLocal()
+        
+        try:
+            while True:
+                # Get raw frame (800x600)
+                frame = camera_service.get_frame_preview(camera_id, width=800, height=600)
+                
+                if frame is None:
+                    time.sleep(0.1)
+                    continue
+                
+                # Run recognition periodically
+                if frame_count % (skip_frames + 1) == 0:
+                    # Run detection in a way that doesn't block too long?
+                    # Since we are in a generator, we can't easily offload to another thread 
+                    # without complex management. But FaceService is now thread-safe.
+                    # We accept that THIS frame might take longer to generate, 
+                    # but the client (browser) will just wait a bit.
+                    # With threaded capture, we are not blocking the camera.
+                    results = face_service.recognize_faces(frame, use_liveness=True, db=db)
+                    last_results = results
+                
+                # Always draw the LATEST results on the CURRENT frame
+                # This creates a smooth video even if detection is 5 FPS
+                if last_results:
+                    frame = face_service.draw_results(frame, last_results)
+                
+                # Encode to JPEG
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+                
+                if ret:
+                    frame_bytes = buffer.tobytes()
+                    yield (b'--frame\r\n'
+                           b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                
+                frame_count += 1
+                # Target ~15 FPS
+                time.sleep(0.066)
+        finally:
+            db.close()
     
     return StreamingResponse(
         generate(),

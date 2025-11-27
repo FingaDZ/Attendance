@@ -68,6 +68,12 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.8.5 (2025-11-27) - RTSP Detection & Visuals
+- **Fix**: Restored detection overlays on RTSP streams (Live View).
+- **Optimization**: Implemented decoupled rendering (smooth 15FPS video with 5FPS detection).
+- **Visuals**: Added landmarks (including nose tracking) to visual feedback.
+- **Fix**: Resolved 502 Bad Gateway error.
+
 ### v1.8.4 (2025-11-27) - Detection & Quality Boost
 - **Fix**: Added thread lock to `FaceService` to prevent MediaPipe crashes during concurrent streaming/detection.
 - **Quality**: Increased MJPEG resolution to **800x600** (was 640x480).

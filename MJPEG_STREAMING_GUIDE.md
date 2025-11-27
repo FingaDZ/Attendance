@@ -1,19 +1,3 @@
-
-### 2. RTSP Optimizations
-- **Buffer Reduction**: `CAP_PROP_BUFFERSIZE = 1` for minimal latency
-- **FPS Limiting**: 15 FPS target for smooth playback without excessive bandwidth
-- **Automatic Detection**: RTSP streams are automatically optimized
-
-### 3. Bandwidth Savings
-- **Before**: ~3-5 Mbps (1080p raw stream)
-- **After**: ~0.5-1 Mbps (640x480 MJPEG @ 70% quality)
-- **Reduction**: ~70-80% bandwidth savings
-
-## 📡 API Usage
-
-### Endpoint
-```
-GET /api/stream/{camera_id}
 ```
 
 ### Frontend Integration (React)

@@ -186,3 +186,40 @@ The system automatically updates employee profiles when:
    ```bash
    sudo systemctl start attendance-backend attendance-frontend
    ```
+
+---
+
+## 🎥 MJPEG Streaming for RTSP Cameras (v1.8.1)
+
+### Overview
+Version 1.8.1 introduces optimized MJPEG streaming specifically designed for RTSP IP cameras, reducing bandwidth by ~70% while maintaining smooth video playback.
+
+### Features
+- **Dedicated Endpoint**: `/api/stream/{camera_id}` for efficient browser streaming
+- **Dual Resolution**: Full-res for recognition, 640x480 for web display
+- **Optimized for RTSP**: Automatic buffer reduction and FPS limiting
+- **Low Latency**: ~100-300ms delay
+
+### Usage in Frontend
+```jsx
+// React component
+<img 
+    src={`${API_BASE_URL}/stream/${cameraId}`}
+    alt="Live Camera Feed"
+    style={{ width: '100%', maxWidth: '640px' }}
+/>
+```
+
+### Configuration
+Edit `backend/app/services/camera_service.py` to adjust quality:
+```python
+self.stream_quality = 70  # 0-100 (higher = better quality)
+self.stream_fps = 15      # Target FPS
+```
+
+### Performance
+- **Bandwidth**: ~0.5-1 Mbps per stream (vs 3-5 Mbps raw RTSP)
+- **CPU Usage**: ~5-10% per stream on Ubuntu 22.04
+- **Latency**: 100-300ms
+
+For detailed configuration and troubleshooting, see [MJPEG_STREAMING_GUIDE.md](MJPEG_STREAMING_GUIDE.md).

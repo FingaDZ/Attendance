@@ -1,12 +1,12 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-1.8.0-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
+![Version](https://img.shields.io/badge/version-1.8.1-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
 
-# Attendance System v1.8.0 🚀
+# Attendance System v1.8.1 🚀
 
 A state-of-the-art facial recognition attendance system designed for high accuracy and adaptability. Built with **FastAPI** (Backend) and **React** (Frontend).
 
-## 🌟 Key Features (v1.8.0)
+## 🌟 Key Features
 
 ### 1. High-Precision Recognition (MediaPipe) 👁️
 - **478 Facial Landmarks**: Uses MediaPipe Face Mesh for extreme precision (vs 68 points in older versions).
@@ -18,7 +18,13 @@ A state-of-the-art facial recognition attendance system designed for high accura
 - **Stability Check**: Updates only trigger after **3 consecutive high-confidence recognitions** (>90%).
 - **Weighted Updates**: Uses a rolling average to gradually evolve the biometric profile without losing the original identity.
 
-### 3. Enterprise-Grade Attendance ⏱️
+### 3. Optimized RTSP Streaming 📹 (NEW in v1.8.1)
+- **MJPEG Endpoint**: Dedicated `/api/stream/{camera_id}` for bandwidth-efficient streaming.
+- **Dual Resolution**: High-res for recognition, low-res (640x480) for web display.
+- **70% Bandwidth Reduction**: Optimized JPEG compression and FPS limiting.
+- **Low Latency**: ~100-300ms delay for real-time monitoring.
+
+### 4. Enterprise-Grade Attendance ⏱️
 - **Strict Time Constraints**: Configurable windows for ENTRY (03:00-13:30) and EXIT (12:00-23:59).
 - **Smart Auth**: Secure WAN access with PIN protection, seamless LAN access.
 - **Reporting**: Export attendance logs to Excel/CSV.

@@ -430,6 +430,41 @@ async def stream_camera(camera_id: int):
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
 
+@router.get("/stream/{camera_id}/clean")
+async def stream_camera_clean(camera_id: int):
+    """
+    MJPEG stream endpoint WITHOUT detection overlays.
+    Used for employee photo capture to get clean frames.
+    """
+    def generate():
+        try:
+            while True:
+                # Get raw frame without any processing
+                frame = camera_service.get_frame_preview(camera_id, width=800, height=600)
+                
+                if frame is None:
+                    time.sleep(0.1)
+                    continue
+                
+                # Encode to JPEG (NO overlays drawn)
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                
+                if ret:
+                    frame_bytes = buffer.tobytes()
+                    yield (b'--frame\r\n'
+                           b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                
+                time.sleep(0.066)  # 15 FPS
+        except GeneratorExit:
+            pass
+        except Exception as e:
+            print(f"Clean stream error: {e}")
+    
+    return StreamingResponse(
+        generate(),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
 # --- Streaming & Recognition ---
 
 def generate_frames(camera_id: int, db_session_factory):

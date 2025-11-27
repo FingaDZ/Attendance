@@ -9,7 +9,7 @@
 
 ---
 
-**Current Version:** v1.9.3
+**Current Version:** v1.9.4
 **Last Updated:** 2025-11-27
 
 ## 🚀 Quick Deployment (Recommended)

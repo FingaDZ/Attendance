@@ -68,6 +68,11 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.9.4 (2025-11-27) - Clean Photo Capture
+- **Feature**: Added `/api/stream/{camera_id}/clean` endpoint for overlay-free RTSP streams.
+- **Fix**: Employee photos now capture clean frames without detection overlays.
+- **UX**: Detection overlays remain visible in LiveView but not in captured photos.
+
 ### v1.9.3 (2025-11-27) - Enhanced Camera Support
 - **Feature**: Added Camera Selection in Employee Registration (Webcam vs RTSP).
 - **Visuals**: Optimized RTSP stream overlay (Smaller, Top-Left aligned).

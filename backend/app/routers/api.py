@@ -323,13 +323,7 @@ def select_camera(cam_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "selected", "camera": cam.name}
 
-@router.get("/stream/{camera_id}")
-async def stream_camera(camera_id: int):
-    """
-    MJPEG streaming endpoint optimized for RTSP cameras.
-    Provides low-latency, bandwidth-efficient streaming for web browsers.
-    """
-    # --- Async Detection Helper ---
+# --- Async Detection Helper ---
 class AsyncFrameProcessor:
     def __init__(self, camera_id):
         self.camera_id = camera_id
@@ -378,47 +372,58 @@ class AsyncFrameProcessor:
 # Global processors cache
 processors = {}
 
-def generate():
-    # Ensure we have a processor for this camera
-    if camera_id not in processors:
-        processors[camera_id] = AsyncFrameProcessor(camera_id)
-    
-    processor = processors[camera_id]
-    
-    try:
-        while True:
-            # Get raw frame (800x600)
-            frame = camera_service.get_frame_preview(camera_id, width=800, height=600)
-            
-            if frame is None:
-                time.sleep(0.1)
-                continue
-            
-            # Feed frame to async detector
-            processor.update_frame(frame)
-            
-            # Get latest available results (instant)
-            results = processor.get_results()
-            
-            # Draw results on the current frame
-            # This is fast because drawing is cheap compared to detection
-            frame = face_service.draw_results(frame, results)
-            
-            # Encode to JPEG
-            ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
-            
-            if ret:
-                frame_bytes = buffer.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-            
-            # Target 15 FPS for video smoothness
-            time.sleep(0.066)
-    except GeneratorExit:
-        # Cleanup if client disconnects (optional, or keep running for shared state)
-        pass
-    except Exception as e:
-        print(f"Stream error: {e}")
+@router.get("/stream/{camera_id}")
+async def stream_camera(camera_id: int):
+    """
+    MJPEG streaming endpoint optimized for RTSP cameras.
+    Provides low-latency, bandwidth-efficient streaming for web browsers.
+    """
+    def generate():
+        # Ensure we have a processor for this camera
+        if camera_id not in processors:
+            print(f"Starting new AsyncFrameProcessor for camera {camera_id}")
+            processors[camera_id] = AsyncFrameProcessor(camera_id)
+        
+        processor = processors[camera_id]
+        
+        try:
+            while True:
+                # Get raw frame (800x600)
+                frame = camera_service.get_frame_preview(camera_id, width=800, height=600)
+                
+                if frame is None:
+                    # print(f"No frame for camera {camera_id}")
+                    time.sleep(0.1)
+                    continue
+                
+                # Feed frame to async detector
+                processor.update_frame(frame)
+                
+                # Get latest available results (instant)
+                results = processor.get_results()
+                
+                # Draw results on the current frame
+                # This is fast because drawing is cheap compared to detection
+                try:
+                    frame = face_service.draw_results(frame, results)
+                except Exception as e:
+                    print(f"Drawing error: {e}")
+                
+                # Encode to JPEG
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
+                
+                if ret:
+                    frame_bytes = buffer.tobytes()
+                    yield (b'--frame\r\n'
+                           b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                
+                # Target 15 FPS for video smoothness
+                time.sleep(0.066)
+        except GeneratorExit:
+            # Cleanup if client disconnects (optional, or keep running for shared state)
+            pass
+        except Exception as e:
+            print(f"Stream error: {e}")
     
     return StreamingResponse(
         generate(),

@@ -1,8 +1,8 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-1.8.1-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
+![Version](https://img.shields.io/badge/version-1.9.5-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
 
-# Attendance System v1.8.1 🚀
+# Attendance System v1.9.5 🚀
 
 A state-of-the-art facial recognition attendance system designed for high accuracy and adaptability. Built with **FastAPI** (Backend) and **React** (Frontend).
 
@@ -59,6 +59,46 @@ chmod +x deploy_ubuntu.sh
 ./deploy_ubuntu.sh
 ```
 
+### Manual Installation
+See the detailed guides below:
+- **[Ubuntu / Linux Deployment Guide](deployment_guide.md)** (Recommended for Production)
+- **[Windows 10/11 Deployment Guide](deployment_guide_windows.md)** (For Local Testing)
+
+---
+
+## 📋 Changelog
+
+### v1.9.5 (2025-11-27)
+- **Performance Boost**: Detection speed increased 4x (2000ms → 500ms interval)
+- **Bandwidth Optimization**: Reduced JPEG quality to 75% (60% smaller uploads)
+- **Improved Responsiveness**: LiveView now updates 4 times per second
+- **Maintained Accuracy**: No loss in recognition precision
+
+### v1.9.4 (2025-11-27)
+- **Clean Photo Capture**: RTSP camera photos now captured without detection overlays
+- **Dual Stream Endpoints**: Added `/api/stream/{id}/clean` for overlay-free capture
+- **Enhanced Camera Selection**: Full webcam and RTSP support in employee registration
+- **Improved Detection**: Live view maintains overlays while captured photos remain clean
+
+### v1.9.3 (2025-11-27)
+- **Enhanced Camera Support**: Added camera selection (Webcam/RTSP) for employee photo capture
+- **Optimized RTSP Overlay**: Repositioned status badge to top-left corner, reduced size by 50%
+- **Maintained Stream Quality**: RTSP streams now use 100% JPEG quality
+- **Improved UX**: Added static nose target (+) to Live View for better face positioning
+
+### v1.9.2 (2025-11-27)
+- **Quality**: Increased RTSP stream quality to 100% (Crystal clear)
+- **Visuals**: Added static "Nose Target" (+) in frontend overlay
+- **Cleanup**: Removed redundant backend overlays
+
+### v1.9.1 (2025-11-27)
+- **Fix**: Moved `AsyncFrameProcessor` to global scope (stability)
+- **Stability**: RTSP streaming now robust over long periods
+
+### v1.9.0 (2025-11-27)
+- **Optimization**: Async Threaded Detection for RTSP (15 FPS smooth video)
+- **Visuals**: Updated RTSP overlay to match frontend style
+- **Feature**: Added "Nose Tip" (+) marker
 
 ### v1.8.5 (2025-11-27) - RTSP Detection & Visuals
 - **Fix**: Restored detection overlays on RTSP streams (Live View).

@@ -481,7 +481,8 @@ class FaceService:
             if kps is not None:
                 # Draw a subset of landmarks for performance and clarity
                 # or all if fast enough. Let's draw key points.
-                for (x, y) in kps:
+                for point in kps:
+                    x, y = point[:2]
                     cv2.circle(frame, (int(x), int(y)), 1, (0, 255, 255), -1)
 
         return frame

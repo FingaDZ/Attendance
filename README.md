@@ -62,6 +62,11 @@ See the detailed guides below:
 
 ## 📋 Changelog
 
+### v1.8.0.1 (2025-11-27) - Patch
+- **Fix**: Added `mediapipe` to `requirements.txt` for automated installation.
+- **Docs**: Updated deployment guides with explicit MediaPipe installation steps.
+- **Script**: Created `update_attendance.sh` for easy system updates.
+
 ### v1.8.0 (2025-11-27) - MAJOR UPDATE
 - **New**: Integrated **MediaPipe Face Mesh** (478 landmarks) for superior accuracy.
 - **New**: Added **Adaptive Training System** for automatic profile updates.

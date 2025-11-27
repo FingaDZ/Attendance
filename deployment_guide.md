@@ -69,6 +69,9 @@ pip install -r requirements.txt
 # You MUST install specific versions of Protobuf and Numpy to avoid conflicts between MediaPipe and InsightFace.
 pip install "protobuf<5" "numpy<2"
 
+# Install MediaPipe (new in v1.8.0)
+pip install mediapipe
+
 # Verify Installation
 python3 -c "import mediapipe; import insightface; print('✅ System Ready')"
 ```

@@ -32,9 +32,16 @@ echo "📦 Installing dependencies..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# CRITICAL: Force compatible versions for MediaPipe & TensorFlow/InsightFace
+# CRITICAL: Force compatible versions for MediaPipe & InsightFace
 echo "🔧 Enforcing compatible library versions (Protobuf < 5, Numpy < 2)..."
 pip install "protobuf<5" "numpy<2"
+
+# Install MediaPipe (new in v1.8.0)
+echo "📦 Installing MediaPipe for 478-point facial landmarks..."
+pip install mediapipe
+
+# Verify installation
+python3 -c "import mediapipe; import insightface; print('✅ All dependencies verified')"
 
 # Run Database Migrations (if any)
 # python -m app.database_migration_script_if_exists

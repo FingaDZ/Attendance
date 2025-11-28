@@ -39,15 +39,12 @@ pip install --upgrade pip
 # Install Base Dependencies
 pip install -r requirements.txt
 
-# ⚠️ CRITICAL STEP FOR v1.8.0 ⚠️
-# You MUST install specific versions of Protobuf and Numpy to avoid conflicts between MediaPipe and InsightFace.
+# ⚠️ CRITICAL STEP FOR v2.0.0 ⚠️
+# Ensure specific versions of Protobuf and Numpy for InsightFace compatibility.
 pip install "protobuf<5" "numpy<2"
 
-# Install MediaPipe (new in v1.8.0)
-pip install mediapipe
-
 # Verify Installation
-python3 -c "import mediapipe; import insightface; print('✅ System Ready')"
+python3 -c "import insightface; print('✅ System Ready')"
 ```
 
 ### Step 3: Setup Frontend

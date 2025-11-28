@@ -131,7 +131,7 @@ const LiveView = () => {
             if (isProcessing) return; // Skip if busy
 
             const source = videoRef.current || imgRef.current;
-            
+
             if (source && canvasRef.current) {
                 // Check if video is playing (only for video element)
                 if (source.tagName === 'VIDEO' && (source.paused || source.ended)) return;
@@ -140,10 +140,10 @@ const LiveView = () => {
 
                 isProcessing = true;
                 const context = canvasRef.current.getContext('2d');
-                
+
                 const width = source.videoWidth || source.naturalWidth;
                 const height = source.videoHeight || source.naturalHeight;
-                
+
                 if (!width || !height) {
                     isProcessing = false;
                     return;
@@ -220,6 +220,11 @@ const LiveView = () => {
         // Check if user is positioning (name is "Positioning...")
         if (result.name === "Positioning...") {
             return { color: '#FFA500', text: 'Position your face in the circle', verified: false, positioning: true }; // Orange
+        }
+
+        // Treat "Unknown" as unverified regardless of confidence
+        if (result.name === "Unknown") {
+            return { color: '#FF0000', text: 'Unknown Face', verified: false, positioning: false }; // Red
         }
 
         if (conf < 0.85) {

@@ -8,10 +8,10 @@ A state-of-the-art facial recognition attendance system designed for high accura
 
 ## 🌟 Key Features
 
-### 1. High-Precision Recognition (MediaPipe) 👁️
-- **478 Facial Landmarks**: Uses MediaPipe Face Mesh for extreme precision (vs 68 points in older versions).
-- **Robust Liveness Detection**: Active detection of blinking, head movement, and texture analysis to prevent photo spoofing.
-- **Iris Tracking**: Precise eye tracking for attention awareness.
+### 1. High-Precision Recognition (InsightFace) 👁️
+- **InsightFace Only**: Optimized pipeline using InsightFace's `buffalo_l` model for detection, alignment, and recognition.
+- **Lightweight Liveness**: Texture-based liveness detection (sharpness/color analysis) replaces heavy mesh-based checks.
+- **Performance**: 3-5x faster detection and significantly lower CPU usage compared to previous versions.
 
 ### 2. Adaptive Training System 🧠
 - **Self-Learning**: The system automatically updates employee profiles when appearance changes (e.g., beard growth, aging).

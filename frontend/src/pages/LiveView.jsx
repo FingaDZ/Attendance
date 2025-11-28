@@ -12,6 +12,7 @@ const LiveView = () => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const overlayCanvasRef = useRef(null);
+    const imgRef = useRef(null);
     const [stream, setStream] = useState(null);
     const [lastDetection, setLastDetection] = useState(null);
     const [isRecognizing, setIsRecognizing] = useState(false);
@@ -40,7 +41,7 @@ const LiveView = () => {
     // Draw landmarks on overlay canvas
     useEffect(() => {
         const canvas = overlayCanvasRef.current;
-        const video = videoRef.current;
+        const video = videoRef.current || imgRef.current;
         if (!canvas || !video || currentResults.length === 0) {
             if (canvas) {
                 const ctx = canvas.getContext('2d');
@@ -53,8 +54,9 @@ const LiveView = () => {
         if (!result.landmarks || result.landmarks.length === 0) return;
 
         const ctx = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        // Use videoWidth/Height for video, naturalWidth/Height for img
+        canvas.width = video.videoWidth || video.naturalWidth;
+        canvas.height = video.videoHeight || video.naturalHeight;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Draw landmarks (Subtle)
@@ -128,12 +130,28 @@ const LiveView = () => {
         const interval = setInterval(async () => {
             if (isProcessing) return; // Skip if busy
 
-            if (videoRef.current && canvasRef.current && !videoRef.current.paused && !videoRef.current.ended) {
+            const source = videoRef.current || imgRef.current;
+            
+            if (source && canvasRef.current) {
+                // Check if video is playing (only for video element)
+                if (source.tagName === 'VIDEO' && (source.paused || source.ended)) return;
+                // Check if image is loaded
+                if (source.tagName === 'IMG' && !source.complete) return;
+
                 isProcessing = true;
                 const context = canvasRef.current.getContext('2d');
-                canvasRef.current.width = videoRef.current.videoWidth;
-                canvasRef.current.height = videoRef.current.videoHeight;
-                context.drawImage(videoRef.current, 0, 0);
+                
+                const width = source.videoWidth || source.naturalWidth;
+                const height = source.videoHeight || source.naturalHeight;
+                
+                if (!width || !height) {
+                    isProcessing = false;
+                    return;
+                }
+
+                canvasRef.current.width = width;
+                canvasRef.current.height = height;
+                context.drawImage(source, 0, 0, width, height);
 
                 canvasRef.current.toBlob(async (blob) => {
                     if (!blob) {
@@ -154,7 +172,7 @@ const LiveView = () => {
 
                             // Log attendance if confidence > 0.85 AND name is not Unknown
                             if (confidence > 0.85 && name !== "Unknown") {
-                                const logRes = await api.post(`/log_attendance/?employee_id=${response.data.employee_id}&camera_id=Webcam&confidence=${confidence}`);
+                                const logRes = await api.post(`/log_attendance/?employee_id=${response.data.employee_id}&camera_id=${selectedCamera ? selectedCamera.name : 'Webcam'}&confidence=${confidence}`);
                                 if (logRes.data.status === 'logged') {
                                     playAttendanceSound(logRes.data.type);
                                 }

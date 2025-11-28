@@ -228,7 +228,6 @@ def delete_employee(emp_id: int, db: Session = Depends(get_db)):
     return {"status": "deleted"}
 
 @router.post("/recognize/")
-@router.post("/recognize/")
 async def recognize_face(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Recognize face from uploaded image with enhanced landmarks and liveness"""
     try:
@@ -240,7 +239,8 @@ async def recognize_face(file: UploadFile = File(...), db: Session = Depends(get
             raise HTTPException(status_code=400, detail="Invalid image")
         
         # Recognize faces with liveness detection
-        results = face_service.recognize_faces(img, use_liveness=True, db=db)
+        # Recognize faces (liveness is now built-in)
+        results = face_service.recognize_faces(img, db=db)
         
         if not results:
             return {"name": "Unknown", "confidence": 0.0, "employee_id": None, "liveness_score": 0.0}
@@ -358,7 +358,7 @@ class AsyncFrameProcessor:
                 
                 if frame_to_process is not None:
                     # Run detection (heavy operation)
-                    results = face_service.recognize_faces(frame_to_process, use_liveness=True, db=db)
+                    results = face_service.recognize_faces(frame_to_process, db=db)
                     with self.lock:
                         self.latest_results = results
                 

@@ -116,63 +116,63 @@ const PinPanel = ({ onAuthSuccess }) => {
     const isError = status === 'error';
 
     return (
-        <div className="flex flex-col h-full bg-gray-900 text-white p-6 shadow-2xl">
+        <div className="flex flex-col h-full bg-gray-900 text-white p-4 shadow-2xl overflow-hidden">
             {/* Header / Display Area */}
-            <div className="flex-1 flex flex-col justify-center items-center mb-6 min-h-[160px]">
+            <div className="flex-shrink-0 flex flex-col justify-center items-center mb-4 min-h-[100px] md:min-h-[160px]">
                 {status === 'idle' || status === 'loading' ? (
                     <>
-                        <h2 className="text-gray-400 text-sm uppercase tracking-wider mb-2">
+                        <h2 className="text-gray-400 text-xs md:text-sm uppercase tracking-wider mb-1 md:mb-2">
                             {step === 'ID' ? 'Entrez votre ID' : 'Entrez votre PIN'}
                         </h2>
-                        <div className="text-4xl font-mono font-bold tracking-widest text-white border-b-2 border-blue-500 pb-2 px-4 min-w-[120px] text-center">
+                        <div className="text-3xl md:text-4xl font-mono font-bold tracking-widest text-white border-b-2 border-blue-500 pb-1 md:pb-2 px-4 min-w-[100px] md:min-w-[120px] text-center">
                             {step === 'ID' ? (empId || '_') : (pin.replace(/./g, '•') || '_')}
                         </div>
-                        {status === 'loading' && <div className="mt-4 text-blue-400 animate-pulse">Vérification...</div>}
+                        {status === 'loading' && <div className="mt-2 text-blue-400 animate-pulse text-sm">Vérification...</div>}
                     </>
                 ) : (
                     <div
-                        className={`flex flex-col items-center justify-center p-6 rounded-xl w-full animate-in fade-in zoom-in duration-300`}
+                        className={`flex flex-col items-center justify-center p-4 rounded-xl w-full animate-in fade-in zoom-in duration-300 h-full`}
                         style={{ backgroundColor: feedback?.color }}
                     >
-                        {isSuccess ? <User className="w-12 h-12 mb-2" /> : <AlertTriangle className="w-12 h-12 mb-2" />}
-                        <h3 className="text-xl font-bold text-center leading-tight">{feedback?.reason}</h3>
-                        <p className="text-sm opacity-90 mt-1 text-center">{feedback?.subtext}</p>
+                        {isSuccess ? <User className="w-8 h-8 md:w-12 md:h-12 mb-1 md:mb-2" /> : <AlertTriangle className="w-8 h-8 md:w-12 md:h-12 mb-1 md:mb-2" />}
+                        <h3 className="text-lg md:text-xl font-bold text-center leading-tight">{feedback?.reason}</h3>
+                        <p className="text-xs md:text-sm opacity-90 mt-1 text-center">{feedback?.subtext}</p>
                     </div>
                 )}
             </div>
 
-            {/* Numpad */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Numpad - Flex Grow to fill space */}
+            <div className="flex-1 grid grid-cols-3 gap-2 md:gap-4 min-h-0">
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                     <button
                         key={num}
                         onClick={() => handleNumberClick(num.toString())}
-                        className="h-16 bg-gray-800 rounded-xl text-2xl font-semibold hover:bg-gray-700 active:bg-gray-600 transition-colors shadow-lg border-b-4 border-gray-950 active:border-b-0 active:translate-y-1"
+                        className="bg-gray-800 rounded-lg md:rounded-xl text-xl md:text-2xl font-semibold hover:bg-gray-700 active:bg-gray-600 transition-colors shadow-sm md:shadow-lg border-b-2 md:border-b-4 border-gray-950 active:border-b-0 active:translate-y-1 flex items-center justify-center"
                     >
                         {num}
                     </button>
                 ))}
                 <button
                     onClick={handleClear}
-                    className="h-16 bg-red-900/30 text-red-400 rounded-xl flex items-center justify-center hover:bg-red-900/50 transition-colors"
+                    className="bg-red-900/30 text-red-400 rounded-lg md:rounded-xl flex items-center justify-center hover:bg-red-900/50 transition-colors"
                 >
-                    <Delete className="w-6 h-6" />
+                    <Delete className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
                 <button
                     onClick={() => handleNumberClick('0')}
-                    className="h-16 bg-gray-800 rounded-xl text-2xl font-semibold hover:bg-gray-700 active:bg-gray-600 transition-colors shadow-lg border-b-4 border-gray-950 active:border-b-0 active:translate-y-1"
+                    className="bg-gray-800 rounded-lg md:rounded-xl text-xl md:text-2xl font-semibold hover:bg-gray-700 active:bg-gray-600 transition-colors shadow-sm md:shadow-lg border-b-2 md:border-b-4 border-gray-950 active:border-b-0 active:translate-y-1 flex items-center justify-center"
                 >
                     0
                 </button>
                 <button
                     onClick={handleEnter}
-                    className="h-16 bg-blue-600 text-white rounded-xl flex items-center justify-center hover:bg-blue-500 active:bg-blue-700 transition-colors shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1"
+                    className="bg-blue-600 text-white rounded-lg md:rounded-xl flex items-center justify-center hover:bg-blue-500 active:bg-blue-700 transition-colors shadow-sm md:shadow-lg border-b-2 md:border-b-4 border-blue-800 active:border-b-0 active:translate-y-1"
                 >
-                    <Check className="w-8 h-8" />
+                    <Check className="w-6 h-6 md:w-8 md:h-8" />
                 </button>
             </div>
 
-            <div className="mt-8 text-center text-gray-600 text-xs">
+            <div className="mt-2 md:mt-8 text-center text-gray-600 text-[10px] md:text-xs">
                 Mode Kiosque Sécurisé v2.1.0
             </div>
         </div>

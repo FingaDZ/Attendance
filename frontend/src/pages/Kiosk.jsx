@@ -47,7 +47,16 @@ const Kiosk = () => {
     const fetchSelectedCamera = async () => {
         try {
             const res = await api.get('/cameras/');
-            const cams = res.data;
+            const cams = Array.isArray(res.data) ? res.data : [];
+
+            if (!Array.isArray(res.data)) {
+                console.error("Invalid API response for cameras:", res.data);
+                // If we get HTML (string), it's likely a proxy/port issue
+                if (typeof res.data === 'string' && res.data.includes('<!doctype html>')) {
+                    console.error("Received HTML instead of JSON. Check API port (8000 vs 3000).");
+                }
+            }
+
             const selected = cams.find(c => c.is_selected === 1) || cams.find(c => c.source === '0') || cams[0];
             setSelectedCamera(selected);
 

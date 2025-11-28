@@ -174,43 +174,20 @@ const LiveView = () => {
                             if (confidence > 0.85 && name !== "Unknown") {
                                 const logRes = await api.post(`/log_attendance/?employee_id=${response.data.employee_id}&camera_id=${selectedCamera ? selectedCamera.name : 'Webcam'}&confidence=${confidence}`);
 
-                                if (logRes.data.status === 'logged') {
-                                    playAttendanceSound(logRes.data.type);
-                                } else if (logRes.data.status === 'blocked') {
-                                    // 🔴 GESTION DES BLOCAGES (v2.0.7)
-                                    const errorMsg = logRes.data.message || "";
-                                    let blockReason = "Log Blocked";
-                                    let blockSubtext = errorMsg;
+                                // UTILISATION DE LA LOGIQUE UNIFIÉE (v2.1.0)
+                                const result = parseAttendanceResponse(logRes.data);
 
-                                    // Analyser le message d'erreur (Logique miroir du backend)
-                                    if (errorMsg.includes("entrées sont autorisées uniquement entre")) {
-                                        blockReason = "Heure Entrée Dépassée";
-                                        blockSubtext = "Entrée: 03h00-13h30";
-                                    } else if (errorMsg.includes("sorties sont autorisées uniquement entre")) {
-                                        blockReason = "Heure Sortie Dépassée";
-                                        blockSubtext = "Sortie: 12h00-23h59";
-                                    } else if (errorMsg.toLowerCase().includes("attendre") && errorMsg.toLowerCase().includes("minutes")) {
-                                        blockReason = "Temps de Travail minimum non achevé";
-                                        // Extraire les minutes si possible, sinon garder le message
-                                        const match = errorMsg.match(/(\d+)\s+minutes/);
-                                        if (match) {
-                                            blockSubtext = `Attendre ${match[1]} minutes`;
-                                        } else {
-                                            blockSubtext = "Attendre quelques minutes";
-                                        }
-                                    } else if (errorMsg.toLowerCase().includes("déjà enregistré")) {
-                                        blockReason = "Detection Déjà Effectué";
-                                        blockSubtext = "1 entrée/sortie max";
-                                    }
-
+                                if (result.success) {
+                                    playAttendanceSound(result.type);
+                                } else if (result.blocked) {
                                     // Injecter l'erreur dans le résultat pour affichage
                                     setCurrentResults([{
                                         name,
                                         confidence,
                                         bbox: [0, 0, 0, 0],
                                         landmarks: landmarks || [],
-                                        blockReason,
-                                        blockSubtext
+                                        blockReason: result.reason,
+                                        blockSubtext: result.subtext
                                     }]);
                                     return; // Stop here to keep the error displayed
                                 }

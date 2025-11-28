@@ -1,0 +1,293 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { Camera, RefreshCw, Clock } from 'lucide-react';
+import api from '../api';
+import PinPanel from '../components/PinPanel';
+import { parseAttendanceResponse } from '../utils/attendanceUtils';
+
+const playAttendanceSound = (logType) => {
+    const audio = new Audio(logType === 'ENTRY' ? '/merci.wav' : '/fin.wav');
+    audio.volume = 0.5;
+    audio.play().catch(err => console.log('Audio play failed:', err));
+};
+
+const Kiosk = () => {
+    // --- Video State ---
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+    const imgRef = useRef(null);
+    const [stream, setStream] = useState(null);
+    const [currentResults, setCurrentResults] = useState([]);
+    const [selectedCamera, setSelectedCamera] = useState(null);
+    const [loadingCam, setLoadingCam] = useState(true);
+    const [facingMode, setFacingMode] = useState('user');
+
+    // --- Clock State ---
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    // --- Clock Effect ---
+    useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    // --- Camera Init ---
+    useEffect(() => {
+        fetchSelectedCamera();
+        return () => stopCamera();
+    }, []);
+
+    // Re-run camera start if facingMode changes (only for client mode)
+    useEffect(() => {
+        if (selectedCamera && selectedCamera.source === '0') {
+            stopCamera();
+            startClientCamera();
+        }
+    }, [facingMode]);
+
+    const fetchSelectedCamera = async () => {
+        try {
+            const res = await api.get('/cameras/');
+            const cams = res.data;
+            const selected = cams.find(c => c.is_selected === 1) || cams.find(c => c.source === '0') || cams[0];
+            setSelectedCamera(selected);
+
+            if (selected) {
+                if (selected.source === '0') {
+                    startClientCamera();
+                } else {
+                    // Server mode (RTSP), start recognition loop
+                    startRecognitionLoop();
+                }
+            }
+        } catch (err) {
+            console.error("Failed to fetch cameras", err);
+        } finally {
+            setLoadingCam(false);
+        }
+    };
+
+    const startClientCamera = async () => {
+        try {
+            const mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: facingMode }
+            });
+            setStream(mediaStream);
+            if (videoRef.current) {
+                videoRef.current.srcObject = mediaStream;
+            }
+            startRecognitionLoop();
+        } catch (err) {
+            console.error("Error accessing camera:", err);
+        }
+    };
+
+    const stopCamera = () => {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            setStream(null);
+        }
+    };
+
+    const startRecognitionLoop = () => {
+        let isProcessing = false;
+        const interval = setInterval(async () => {
+            if (isProcessing) return;
+
+            const source = videoRef.current || imgRef.current;
+
+            if (source && canvasRef.current) {
+                if (source.tagName === 'VIDEO' && (source.paused || source.ended)) return;
+                if (source.tagName === 'IMG' && !source.complete) return;
+
+                isProcessing = true;
+                const context = canvasRef.current.getContext('2d');
+                const width = source.videoWidth || source.naturalWidth;
+                const height = source.videoHeight || source.naturalHeight;
+
+                if (!width || !height) {
+                    isProcessing = false;
+                    return;
+                }
+
+                canvasRef.current.width = width;
+                canvasRef.current.height = height;
+                context.drawImage(source, 0, 0, width, height);
+
+                canvasRef.current.toBlob(async (blob) => {
+                    if (!blob) {
+                        isProcessing = false;
+                        return;
+                    }
+                    const formData = new FormData();
+                    formData.append('file', blob, 'capture.jpg');
+
+                    try {
+                        const response = await api.post('/recognize/', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        });
+
+                        if (response.data && response.data.name) {
+                            const { name, confidence, landmarks } = response.data;
+
+                            if (confidence > 0.85 && name !== "Unknown") {
+                                const logRes = await api.post(`/log_attendance/?employee_id=${response.data.employee_id}&camera_id=${selectedCamera ? selectedCamera.name : 'Webcam'}&confidence=${confidence}`);
+
+                                // UTILISATION DE LA LOGIQUE UNIFIÉE
+                                const result = parseAttendanceResponse(logRes.data);
+
+                                if (result.success) {
+                                    playAttendanceSound(result.type);
+                                    setCurrentResults([{
+                                        name, confidence, landmarks: landmarks || [],
+                                        verified: true
+                                    }]);
+                                } else if (result.blocked) {
+                                    setCurrentResults([{
+                                        name, confidence, landmarks: landmarks || [],
+                                        blocked: true,
+                                        blockReason: result.reason,
+                                        blockSubtext: result.subtext,
+                                        blockColor: result.color
+                                    }]);
+                                    return; // Keep error displayed
+                                }
+                            }
+
+                            // Update overlay if not blocked
+                            setCurrentResults([{
+                                name, confidence, landmarks: landmarks || []
+                            }]);
+                        } else {
+                            setCurrentResults([]);
+                        }
+                    } catch (err) {
+                        // Ignore minor errors
+                    } finally {
+                        isProcessing = false;
+                    }
+                }, 'image/jpeg', 0.75);
+            }
+        }, 500);
+
+        return () => clearInterval(interval);
+    };
+
+    // --- Overlay Logic ---
+    const getOverlayStyle = () => {
+        if (currentResults.length === 0) return null;
+        const result = currentResults[0];
+
+        // 1. Blocage (Prioritaire)
+        if (result.blocked) {
+            return {
+                color: result.blockColor,
+                title: result.blockReason,
+                subtitle: result.blockSubtext,
+                icon: 'alert'
+            };
+        }
+
+        // 2. Positioning
+        if (result.name === "Positioning...") {
+            return {
+                color: '#FFA500',
+                title: 'Position your face',
+                subtitle: 'Center in the circle',
+                icon: 'scan'
+            };
+        }
+
+        // 3. Unknown
+        if (result.name === "Unknown") {
+            return {
+                color: '#EF4444',
+                title: 'Visage Inconnu',
+                subtitle: 'Non reconnu',
+                icon: 'alert'
+            };
+        }
+
+        // 4. Low Confidence
+        if (result.confidence < 0.85) {
+            return {
+                color: '#EF4444',
+                title: 'Précision Faible',
+                subtitle: `${(result.confidence * 100).toFixed(0)}%`,
+                icon: 'alert'
+            };
+        }
+
+        // 5. Success
+        return {
+            color: '#10B981',
+            title: result.name,
+            subtitle: `Précision: ${(result.confidence * 100).toFixed(0)}%`,
+            icon: 'check'
+        };
+    };
+
+    const overlay = getOverlayStyle();
+
+    if (loadingCam) return <div className="h-screen flex items-center justify-center bg-black text-white">Chargement du Kiosque...</div>;
+
+    return (
+        <div className="h-screen w-screen bg-black overflow-hidden flex flex-col md:flex-row">
+            {/* --- LEFT: VIDEO AREA (70%) --- */}
+            <div className="relative flex-1 bg-black h-[60vh] md:h-full">
+                {/* Video Feed */}
+                {selectedCamera?.source === '0' ? (
+                    <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                ) : (
+                    <img ref={imgRef} src={`/api/stream/${selectedCamera?.id}/clean`} alt="Stream" className="w-full h-full object-cover" crossOrigin="anonymous" />
+                )}
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+                {/* Overlay UI */}
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    {/* Positioning Guide */}
+                    <div className="absolute w-[60vw] h-[60vw] md:w-[40vh] md:h-[40vh] border-4 border-white/30 rounded-full">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400/50">+</div>
+                    </div>
+
+                    {/* Status Message */}
+                    {overlay && (
+                        <div className="absolute bottom-10 md:bottom-20 animate-in fade-in zoom-in duration-300">
+                            <div
+                                style={{ backgroundColor: overlay.color }}
+                                className="px-8 py-4 rounded-2xl shadow-2xl text-white text-center min-w-[300px]"
+                            >
+                                <h2 className="text-3xl font-bold mb-1">{overlay.title}</h2>
+                                <p className="text-lg opacity-90">{overlay.subtitle}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Clock Overlay (Top Left) */}
+                <div className="absolute top-6 left-6 bg-black/50 backdrop-blur-md px-4 py-2 rounded-lg text-white border border-white/10">
+                    <div className="flex items-center space-x-2">
+                        <Clock className="w-5 h-5 text-blue-400" />
+                        <span className="text-xl font-mono font-bold">
+                            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 uppercase tracking-wider">
+                        {currentTime.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </div>
+                </div>
+            </div>
+
+            {/* --- RIGHT: PIN PANEL (30%) --- */}
+            <div className="h-[40vh] md:h-full md:w-[350px] lg:w-[400px] border-t md:border-t-0 md:border-l border-gray-800 z-10">
+                <PinPanel
+                    onAuthSuccess={(result) => {
+                        playAttendanceSound(result.type);
+                        // Optional: Show success in video overlay too?
+                    }}
+                />
+            </div>
+        </div>
+    );
+};
+
+export default Kiosk;

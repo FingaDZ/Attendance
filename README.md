@@ -1,15 +1,3 @@
----
----
-![Version](https://img.shields.io/badge/version-2.0.7-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
-
-# Attendance System v2.0.7 🚀
-
-A state-of-the-art facial recognition attendance system designed for high accuracy and adaptability. Built with **FastAPI** (Backend) and **React** (Frontend).
-
-## 🌟 Key Features
-
-### 1. High-Precision Recognition (InsightFace) 👁️
-- **InsightFace Only**: Optimized pipeline using InsightFace's `buffalo_l` model for detection, alignment, and recognition.
 - **Lightweight Liveness**: Texture-based liveness detection (sharpness/color analysis) replaces heavy mesh-based checks.
 - **Performance**: 3-5x faster detection and significantly lower CPU usage compared to previous versions.
 

@@ -1,4 +1,4 @@
-# Attendance System v2.0.2 - Ubuntu 22.04 Deployment Guide
+# Attendance System v2.1.0 - Ubuntu 22.04 Deployment Guide
 
 1. **Clone the repository:**
    ```bash
@@ -343,7 +343,7 @@ self.stream_quality = 70  # 0-100 (higher = better quality)
 self.stream_fps = 15      # Target FPS
 ```
 
-###**Current Version**: v2.0.2
+### **Current Version**: v2.1.0
 **Last Updated**: 2025-11-28
 ### Performance
 - **Bandwidth**: ~0.4-0.8 Mbps per stream (optimized with 75% JPEG quality)

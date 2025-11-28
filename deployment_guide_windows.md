@@ -1,9 +1,3 @@
-# Attendance System - Windows 10/11 Deployment Guide
-
-## Prerequisites
-
-Before starting, ensure you have the following installed:
-
 1.  **Python 3.10 or 3.11**
     *   Download: [python.org](https://www.python.org/downloads/)
     *   **IMPORTANT**: Check "Add Python to PATH" during installation.

@@ -566,66 +566,9 @@ async def stream_camera_clean(camera_id: int):
 
 # --- Streaming & Recognition ---
 
-def generate_frames(camera_id: int, db_session_factory):
-    frame_count = 0
-    skip_frames = 2 # Process 1 out of 3 frames for detection
-    last_results = []
-    
-    # Create a local session for logging
-    db = db_session_factory()
-    
-    while True:
-        frame = camera_service.get_frame(camera_id)
-        if frame is None:
-            time.sleep(0.01)
-            continue
-        
-        # Perform recognition every N frames
-        if frame_count % skip_frames == 0:
-            results = face_service.recognize_faces(frame, use_liveness=True, db=db)
-            last_results = results
-        
-        frame_count += 1
-        
-        # Draw bounding boxes and names
-        display_frame = frame.copy()
-        for name, bbox, conf, emp_id, kps, liveness_score in last_results:
-            x1, y1, x2, y2 = map(int, bbox)
-            
-            # Use liveness score from recognition
-            is_real = liveness_score > 0.4  # v1.6.5: Reduced from 0.5 for less sensitivity
-            
-            # Color: Green if real and high confidence, Red if spoof or low confidence
-            color = (0, 255, 0) if (conf > 0.85 and is_real) else (0, 0, 255)
-            cv2.rectangle(display_frame, (x1, y1), (x2, y2), color, 2)
-            
-            # Display name, confidence, and liveness
-            cv2.putText(display_frame, f"{name} ({conf:.2f})", (x1, y1 - 30), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-            
-            # Liveness indicator
-            liveness_text = f"Real ({liveness_score:.2f})" if is_real else f"Spoof ({liveness_score:.2f})"
-            liveness_color = (0, 255, 0) if is_real else (0, 0, 255)
-            cv2.putText(display_frame, liveness_text, (x1, y1 - 10), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, liveness_color, 2)
-            
-            # Draw landmarks if available
-            if kps is not None:
-                for (x, y) in kps:
-                    cv2.circle(display_frame, (int(x), int(y)), 1, (255, 255, 0), -1)
-        
-        # Encode frame
-        ret, buffer = cv2.imencode('.jpg', display_frame)
-        frame_bytes = buffer.tobytes()
-        
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+# Ancienne fonction generate_frames supprimée pour éviter les conflits avec AsyncFrameProcessor
+# L'endpoint /stream/{camera_id} est maintenant géré par stream_camera plus haut
 
-@router.get("/stream/{camera_id}")
-def video_feed(camera_id: int, db: Session = Depends(get_db)):
-    from ..database import SessionLocal
-    return StreamingResponse(generate_frames(camera_id, SessionLocal), 
-                           media_type="multipart/x-mixed-replace; boundary=frame")
 
 # --- Attendance Logging ---
 

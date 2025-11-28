@@ -1,8 +1,8 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-2.0.4-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.5-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
 
-# Attendance System v2.0.4 🚀
+# Attendance System v2.0.5 🚀
 
 A state-of-the-art facial recognition attendance system designed for high accuracy and adaptability. Built with **FastAPI** (Backend) and **React** (Frontend).
 
@@ -71,6 +71,11 @@ See the detailed guides below:
 ---
 
 ## 📋 Changelog
+
+### v2.0.5 (2025-11-28) - Critical Hotfix
+- **🔧 Critical Fix**: Resolved API endpoint conflict (`/stream/{camera_id}`) that prevented v2.0.4 features from loading.
+- **✅ Feature Activation**: Visual error messages and auto-logging logic are now correctly enforced.
+- **🧹 Code Cleanup**: Removed obsolete `generate_frames` function to prevent future conflicts.
 
 ### v2.0.4 (2025-11-28) - Visual Error Messages
 - **🎨 Visual Feedback**: Added color-coded error messages in live video streaming when logging is blocked.

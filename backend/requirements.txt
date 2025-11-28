@@ -2,7 +2,7 @@ fastapi
 uvicorn
 insightface
 onnxruntime
-opencv-python
+opencv-python<4.10
 numpy
 sqlalchemy
 python-multipart

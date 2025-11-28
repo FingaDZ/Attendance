@@ -54,8 +54,22 @@ const Sidebar = ({ isOpen, onClose }) => {
                                 className={`flex items-center px-4 py-3 rounded-lg transition-colors ${isActive ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                                     }`}
                             >
-                            </div>
-            </div>
+                                <Icon className="w-5 h-5 mr-3" />
+                                {link.label}
+                            </Link>
+                        );
+                    })}
+                </nav>
+                <div className="p-4 border-t border-gray-800 text-xs text-gray-500 flex flex-col items-center space-y-1">
+                    <div className="flex justify-between w-full">
+                        <span>v2.1.0</span>
+                        <span>© 2025</span>
+                    </div>
+                    <div className="text-blue-400 font-semibold tracking-wider pt-2 opacity-80">
+                        Powered by AIRBAND
+                    </div>
+                </div>
+            </div >
         </>
     );
 };

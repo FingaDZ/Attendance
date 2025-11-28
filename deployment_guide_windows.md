@@ -414,20 +414,6 @@ Run your application as usual:
 - Or manually start backend and frontend in separate terminals
 
 ### Quick Update Script
-
-Create a file `update_attendance.bat` in the root folder:
-
-```batch
-@echo off
-echo Windows Deployment Guide - Attendance System v1.6.15 Update ===
-
-echo Backing up database...
-copy attendance.db attendance.db.backup.%date:~-4,4%%date:~-10,2%%date:~-7,2%_%time:~0,2%%time:~3,2%%time:~6,2%
-
-echo Pulling latest code...
-git pull origin master
-
-echo Updating backend...
 cd backend
 call venv\Scripts\activate
 pip install --upgrade pip

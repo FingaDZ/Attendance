@@ -361,6 +361,67 @@ class AsyncFrameProcessor:
                     results = face_service.recognize_faces(frame_to_process, db=db)
                     with self.lock:
                         self.latest_results = results
+                    
+                    # ✅ AUTO-LOGGING: Enregistrement automatique des logs d'attendance
+                    if results:
+                        for result in results:
+                            # Vérifier si c'est une reconnaissance valide
+                            if (result["employee_id"] is not None and 
+                                result["confidence"] > 0.85 and 
+                                result["liveness"] > 0.4):
+                                
+                                employee_id = result["employee_id"]
+                                confidence = result["confidence"]
+                                
+                                # Debounce : éviter les doublons (5 secondes)
+                                with attendance_lock:
+                                    now = time.time()
+                                    if employee_id in last_processed:
+                                        if now - last_processed[employee_id] < 5:
+                                            continue  # Skip, trop récent
+                                    
+                                    last_processed[employee_id] = now
+                                    
+                                    # Vérifier le statut (ENTRY ou EXIT)
+                                    log_type, error_msg = check_attendance_status(employee_id, db)
+                                    
+                                    if log_type:
+                                        # Enregistrer le log
+                                        emp = db.query(Employee).filter(Employee.id == employee_id).first()
+                                        if emp:
+                                            # Calculer worked_minutes si EXIT
+                                            worked_minutes = None
+                                            if log_type == 'EXIT':
+                                                today_start = datetime.datetime.now().replace(
+                                                    hour=0, minute=0, second=0, microsecond=0
+                                                )
+                                                entry_log = db.query(AttendanceLog).filter(
+                                                    AttendanceLog.employee_id == employee_id,
+                                                    AttendanceLog.type == 'ENTRY',
+                                                    AttendanceLog.timestamp >= today_start
+                                                ).order_by(AttendanceLog.timestamp.desc()).first()
+                                                
+                                                if entry_log:
+                                                    diff = datetime.datetime.now() - entry_log.timestamp
+                                                    worked_minutes = int(diff.total_seconds() / 60)
+                                            
+                                            # Créer le log
+                                            log = AttendanceLog(
+                                                employee_id=employee_id,
+                                                employee_name=emp.name,
+                                                camera_id=str(self.camera_id),
+                                                confidence=confidence,
+                                                type=log_type,
+                                                worked_minutes=worked_minutes
+                                            )
+                                            db.add(log)
+                                            db.commit()
+                                            
+                                            print(f"✅ Auto-logged: {emp.name} - {log_type} (Conf: {confidence:.2f}, Cam: {self.camera_id})")
+                                    else:
+                                        # Log bloqué (contraintes non respectées)
+                                        if error_msg:
+                                            print(f"⚠️ Log blocked for Emp {employee_id}: {error_msg}")
                 
                 # Sleep to limit detection FPS (2.5 FPS for CPU optimization)
                 time.sleep(0.4) 

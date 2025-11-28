@@ -1,8 +1,8 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-2.0.2-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.3-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
 
-# Attendance System v2.0.2 🚀
+# Attendance System v2.0.3 🚀
 
 A state-of-the-art facial recognition attendance system designed for high accuracy and adaptability. Built with **FastAPI** (Backend) and **React** (Frontend).
 
@@ -30,6 +30,7 @@ A state-of-the-art facial recognition attendance system designed for high accura
 - **Strict Time Constraints**: Configurable windows for ENTRY (03:00-13:30) and EXIT (12:00-23:59).
 - **Smart Auth**: Secure WAN access with PIN protection, seamless LAN access.
 - **Reporting**: Export attendance logs to Excel/CSV.
+- **Auto-Logging**: Automatic attendance recording during live video streaming (v2.0.3).
 
 ---
 
@@ -69,6 +70,13 @@ See the detailed guides below:
 ---
 
 ## 📋 Changelog
+
+### v2.0.3 (2025-11-28) - Auto-Logging Restoration
+- **✅ Auto-Logging Restored**: Fixed automatic attendance recording in live video streaming (broken since v2.0.0).
+- **📊 Dashboard Optimization**: Dashboard now displays only today's logs by default (instead of entire month).
+- **🔒 All Conditions Preserved**: Debounce (5s), time constraints, cooldowns (4h), and daily limits still enforced.
+- **💾 Full History Retained**: All historical logs remain in database for future use and reporting.
+- **🎯 Performance**: No impact on CPU usage or streaming latency.
 
 ### v2.0.2 (2025-11-28) - CPU Optimization Release
 - **🚀 60-70% CPU Reduction**: Optimized detection frequency (2.5 FPS instead of 5 FPS).

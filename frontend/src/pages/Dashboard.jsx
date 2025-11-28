@@ -27,7 +27,8 @@ const Dashboard = () => {
         return `${year}-${month}-01`;
     };
 
-    const [startDate, setStartDate] = useState(getFirstDayOfMonthString());
+    // ✅ MODIFICATION: Afficher uniquement les logs du jour par défaut (au lieu du mois entier)
+    const [startDate, setStartDate] = useState(getTodayString());  // Changé de getFirstDayOfMonthString() à getTodayString()
     const [endDate, setEndDate] = useState(getTodayString());
     const [selectedEmployee, setSelectedEmployee] = useState('');
     const [selectedCamera, setSelectedCamera] = useState('');

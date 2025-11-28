@@ -246,19 +246,19 @@ async def recognize_face(file: UploadFile = File(...), db: Session = Depends(get
             return {"name": "Unknown", "confidence": 0.0, "employee_id": None, "liveness_score": 0.0}
         
         # Get the first (best) result
-        name, bbox, conf, emp_id, kps, liveness_score = results[0]
+        result = results[0]
         
         # Get server timestamp
         server_time = datetime.datetime.now().strftime("%H:%M:%S")
         
         return {
-            "name": name,
-            "confidence": float(conf),
-            "liveness_score": float(liveness_score),
-            "employee_id": emp_id,
+            "name": result["name"],
+            "confidence": float(result["confidence"]),
+            "liveness_score": float(result["liveness"]),
+            "employee_id": result["employee_id"],
             "timestamp": server_time,
-            "landmarks_count": len(kps) if kps is not None else 0,
-            "landmarks": kps.tolist() if kps is not None else []
+            "landmarks_count": len(result["keypoints"]) if result["keypoints"] is not None else 0,
+            "landmarks": result["keypoints"] if result["keypoints"] is not None else []
         }
     except Exception as e:
         print(f"Recognition error: {e}")

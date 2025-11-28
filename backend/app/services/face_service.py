@@ -179,6 +179,49 @@ class FaceService:
     
     # ==================== FACE REGISTRATION ====================
     
+    def check_face_quality(self, image_bytes):
+        """
+        Check if image has a valid face and good quality
+        Returns: (is_good, message)
+        """
+        try:
+            nparr = np.frombuffer(image_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+            
+            if img is None:
+                return False, "Invalid image format"
+                
+            # Check resolution
+            h, w = img.shape[:2]
+            if h < 200 or w < 200:
+                return False, f"Image too small ({w}x{h}). Minimum 200x200 required."
+                
+            # Detect face
+            faces = self.app.get(img)
+            if not faces:
+                return False, "No face detected"
+                
+            if len(faces) > 1:
+                return False, f"Multiple faces detected ({len(faces)}). Please provide a photo with a single face."
+                
+            # Check face size
+            face = faces[0]
+            box = face.bbox
+            face_w = box[2] - box[0]
+            face_h = box[3] - box[1]
+            
+            if face_w < 80 or face_h < 80:
+                return False, "Face too small. Please move closer to camera."
+                
+            # Check centrality
+            if not self.is_face_centered(face.bbox, w, h):
+                 return False, "Face not centered. Please look straight at the camera."
+
+            return True, "Quality OK"
+            
+        except Exception as e:
+            return False, f"Quality check error: {str(e)}"
+
     def register_face(self, image_bytes, is_grayscale=False):
         """
         Register face from image bytes

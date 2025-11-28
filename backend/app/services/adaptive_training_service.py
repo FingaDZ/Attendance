@@ -95,38 +95,61 @@ class AdaptiveTrainingService:
     def _update_employee_profile(self, db: Session, employee_id: int, new_face_embedding: np.ndarray) -> bool:
         """
         Met à jour l'embedding en base de données avec une moyenne pondérée.
+        Choisit l'embedding le plus proche parmi les 6 disponibles.
         """
         try:
             employee = db.query(Employee).filter(Employee.id == employee_id).first()
-            if not employee or not employee.face_encoding:
+            if not employee:
                 return False
                 
-            # Charger l'ancien embedding
-            # Note: On suppose que face_encoding est stocké en bytes/pickle ou JSON
-            # Ici on assume que c'est géré par le modèle ou FaceService, 
-            # mais pour l'exemple on va simuler le décodage/encodage
             import pickle
             
-            # Décoder l'ancien embedding
-            if isinstance(employee.face_encoding, bytes):
-                old_embedding = pickle.loads(employee.face_encoding)
-            else:
-                # Si c'est déjà un numpy array ou autre format géré par SQLAlchemy
-                old_embedding = np.array(employee.face_encoding)
+            # Find the closest embedding to update
+            best_idx = -1
+            best_sim = -1.0
+            best_embedding = None
             
-            # Calculer la moyenne pondérée (Rolling Average)
+            embeddings = []
+            # Load all 6 embeddings
+            for i in range(1, 7):
+                emb_field = getattr(employee, f'embedding{i}', None)
+                if emb_field:
+                    try:
+                        emb = pickle.loads(emb_field)
+                        embeddings.append((i, emb))
+                    except:
+                        pass
+            
+            if not embeddings:
+                return False
+                
+            # Normalize new embedding
+            new_emb_norm = new_face_embedding / (np.linalg.norm(new_face_embedding) + 1e-10)
+            
+            # Find closest
+            for idx, emb in embeddings:
+                emb_norm = emb / (np.linalg.norm(emb) + 1e-10)
+                sim = np.dot(emb_norm, new_emb_norm)
+                if sim > best_sim:
+                    best_sim = sim
+                    best_idx = idx
+                    best_embedding = emb
+            
+            if best_idx == -1:
+                return False
+                
+            # Update the best matching embedding
             # New = (Old * 0.9) + (New * 0.1)
-            updated_embedding = (old_embedding * (1.0 - self.LEARNING_RATE)) + (new_face_embedding * self.LEARNING_RATE)
+            updated_embedding = (best_embedding * (1.0 - self.LEARNING_RATE)) + (new_face_embedding * self.LEARNING_RATE)
             
-            # Normaliser à nouveau (important pour la similarité cosinus)
+            # Normaliser à nouveau
             updated_embedding = updated_embedding / np.linalg.norm(updated_embedding)
             
             # Encoder et sauvegarder
-            employee.face_encoding = pickle.dumps(updated_embedding)
-            employee.updated_at = time.strftime('%Y-%m-%d %H:%M:%S')
+            setattr(employee, f'embedding{best_idx}', pickle.dumps(updated_embedding))
             
             db.commit()
-            logger.info(f"✅ PROFILE UPDATED: Employee {employee_id} adapted to new appearance.")
+            logger.info(f"✅ PROFILE UPDATED: Employee {employee_id} (Embedding {best_idx}) adapted to new appearance.")
             return True
             
         except Exception as e:

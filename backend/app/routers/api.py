@@ -388,12 +388,11 @@ async def stream_camera(camera_id: int):
         
         try:
             while True:
-                # Get raw frame (800x600)
-                frame = camera_service.get_frame_preview(camera_id, width=800, height=600)
+                # Get raw frame (640x360 optimized)
+                frame = camera_service.get_frame_preview(camera_id, width=640, height=360)
                 
                 if frame is None:
-                    # print(f"No frame for camera {camera_id}")
-                    time.sleep(0.1)
+                    time.sleep(0.05)
                     continue
                 
                 # Feed frame to async detector
@@ -403,24 +402,22 @@ async def stream_camera(camera_id: int):
                 results = processor.get_results()
                 
                 # Draw results on the current frame
-                # This is fast because drawing is cheap compared to detection
                 try:
                     frame = face_service.draw_results(frame, results)
                 except Exception as e:
                     print(f"Drawing error: {e}")
                 
-                # Encode to JPEG
-                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                # Encode to JPEG (Quality 70 for speed/bandwidth)
+                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
                 
                 if ret:
                     frame_bytes = buffer.tobytes()
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
                 
-                # Target 15 FPS for video smoothness
-                time.sleep(0.066)
+                # Target 25 FPS for fluidity (0.04s)
+                time.sleep(0.04)
         except GeneratorExit:
-            # Cleanup if client disconnects (optional, or keep running for shared state)
             pass
         except Exception as e:
             print(f"Stream error: {e}")

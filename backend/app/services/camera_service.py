@@ -8,6 +8,7 @@ class CameraStream:
     def __init__(self, source):
         self.source = source
         self.frame = None
+        self.preview_frame = None # Cached resized frame
         self.lock = threading.Lock()
         self.running = False
         self.thread = None
@@ -28,7 +29,8 @@ class CameraStream:
                 source = f"{source}?tcp=0"
             self.cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            self.cap.set(cv2.CAP_PROP_FPS, 15)
+            # Remove FPS limit to drain buffer faster
+            # self.cap.set(cv2.CAP_PROP_FPS, 15) 
             self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'H264'))
         else:
             self.cap = cv2.VideoCapture(source)
@@ -55,10 +57,18 @@ class CameraStream:
     def _update(self):
         while self.running:
             if self.cap and self.cap.isOpened():
-                ret, frame = self.cap.read()
+                # Grab first to clear buffer if multiple frames are available
+                self.cap.grab() 
+                ret, frame = self.cap.retrieve()
+                
                 if ret:
+                    # Resize for preview immediately (640x360 is enough for web)
+                    # This moves CPU load to capture thread (1 per frame) instead of API (N per client)
+                    preview = cv2.resize(frame, (640, 360), interpolation=cv2.INTER_NEAREST)
+                    
                     with self.lock:
                         self.frame = frame
+                        self.preview_frame = preview
                 else:
                     # Try to reconnect
                     print(f"Stream lost for {self.source}, reconnecting...")
@@ -70,18 +80,22 @@ class CameraStream:
                 time.sleep(1)
                 self._open_capture()
             
-            # Limit capture rate to save CPU (approx 30 FPS max capture)
-            time.sleep(0.01)
+            # Minimal sleep to prevent CPU hogging, but fast enough to drain buffer
+            time.sleep(0.005)
 
     def read(self):
         with self.lock:
             return self.frame.copy() if self.frame is not None else None
 
+    def read_preview(self):
+        with self.lock:
+            return self.preview_frame.copy() if self.preview_frame is not None else None
+
 class CameraService:
     def __init__(self):
         self.cameras = {} # id -> CameraStream
-        self.stream_quality = 90
-        self.stream_fps = 15
+        self.stream_quality = 70 # Reduced default quality
+        self.stream_fps = 20 # Increased FPS
 
     def start_camera(self, camera_id, source):
         if camera_id in self.cameras:
@@ -108,14 +122,13 @@ class CameraService:
         
         return self.cameras[camera_id].read()
 
-    def get_frame_preview(self, camera_id, width=800, height=600):
+    def get_frame_preview(self, camera_id, width=640, height=360):
         """Get low-resolution frame for web streaming (optimized)"""
-        frame = self.get_frame(camera_id)
-        if frame is None:
+        if camera_id not in self.cameras:
             return None
-        
-        # Resize to lower resolution for web streaming
-        return cv2.resize(frame, (width, height), interpolation=cv2.INTER_LINEAR)
+            
+        # Use cached preview frame
+        return self.cameras[camera_id].read_preview()
 
     def get_frame_jpeg(self, camera_id, quality=None, preview=True):
         if quality is None:

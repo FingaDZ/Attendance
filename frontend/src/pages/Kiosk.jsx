@@ -284,6 +284,11 @@ const Kiosk = () => {
                         {currentTime.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
                     </div>
                 </div>
+
+                {/* Watermark (Top Right) */}
+                <div className="absolute top-6 right-6 opacity-50 text-white/80 font-semibold tracking-widest text-xs md:text-sm z-20 pointer-events-none shadow-black drop-shadow-md">
+                    Powered by <span className="text-blue-400 font-bold">AIRBAND</span>
+                </div>
             </div>
 
             {/* --- RIGHT: PIN PANEL (30%) --- */}

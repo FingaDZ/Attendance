@@ -362,8 +362,8 @@ class AsyncFrameProcessor:
                     with self.lock:
                         self.latest_results = results
                 
-                # Sleep to limit detection FPS (e.g., 5 FPS)
-                time.sleep(0.2) 
+                # Sleep to limit detection FPS (2.5 FPS for CPU optimization)
+                time.sleep(0.4) 
         except Exception as e:
             print(f"Detection thread error: {e}")
         finally:

@@ -29,7 +29,7 @@ class CameraStream:
                 source = f"{source}?tcp=0"
             self.cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            self.cap.set(cv2.CAP_PROP_FPS, 20)  # Restored: Limit FPS for smoother playback
+            self.cap.set(cv2.CAP_PROP_FPS, 15)  # Match camera FPS setting
             self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'H264'))
         else:
             self.cap = cv2.VideoCapture(source)
@@ -60,9 +60,9 @@ class CameraStream:
                 ret, frame = self.cap.read()
                 
                 if ret:
-                    # Resize for preview with better quality (INTER_LINEAR instead of INTER_NEAREST)
-                    # 800x450 provides better quality while still being efficient
-                    preview = cv2.resize(frame, (800, 450), interpolation=cv2.INTER_LINEAR)
+                    # Resize for preview - INTER_AREA is faster for downscaling
+                    # 640x360 provides good quality with better performance
+                    preview = cv2.resize(frame, (640, 360), interpolation=cv2.INTER_AREA)
                     
                     with self.lock:
                         self.frame = frame
@@ -78,8 +78,8 @@ class CameraStream:
                 time.sleep(1)
                 self._open_capture()
             
-            # Balanced sleep for smooth capture
-            time.sleep(0.033)  # ~30 FPS capture rate
+            # Synchronized with camera and stream FPS (15 FPS)
+            time.sleep(0.067)  # ~15 FPS capture rate
 
     def read(self):
         with self.lock:
@@ -120,7 +120,7 @@ class CameraService:
         
         return self.cameras[camera_id].read()
 
-    def get_frame_preview(self, camera_id, width=800, height=450):
+    def get_frame_preview(self, camera_id, width=640, height=360):
         """Get low-resolution frame for web streaming (optimized)"""
         if camera_id not in self.cameras:
             return None

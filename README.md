@@ -1,8 +1,8 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-2.0.0-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.1-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
 
-# Attendance System v2.0.0 🚀
+# Attendance System v2.0.1 🚀
 
 A state-of-the-art facial recognition attendance system designed for high accuracy and adaptability. Built with **FastAPI** (Backend) and **React** (Frontend).
 
@@ -18,11 +18,12 @@ A state-of-the-art facial recognition attendance system designed for high accura
 - **Stability Check**: Updates only trigger after **3 consecutive high-confidence recognitions** (>90%).
 - **Weighted Updates**: Uses a rolling average to gradually evolve the biometric profile without losing the original identity.
 
-### 3. Optimized RTSP Streaming 📹 (NEW in v1.8.1)
+### 3. Optimized RTSP Streaming 📹 (Optimized in v2.0.1)
 - **MJPEG Endpoint**: Dedicated `/api/stream/{camera_id}` for bandwidth-efficient streaming.
-- **Dual Resolution**: High-res for recognition, low-res (640x480) for web display.
-- **70% Bandwidth Reduction**: Optimized JPEG compression and FPS limiting.
-- **Low Latency**: ~100-300ms delay for real-time monitoring.
+- **Optimized Performance**: 640x360 @ 15 FPS with 75% JPEG quality for smooth playback.
+- **Low CPU Usage**: INTER_AREA interpolation and progressive JPEG encoding.
+- **Low Latency**: ~150-300ms delay for real-time monitoring.
+- **H.265 Support**: Compatible with H.265/HEVC camera streams for better compression.
 
 ### 4. Enterprise-Grade Attendance ⏱️
 - **Strict Time Constraints**: Configurable windows for ENTRY (03:00-13:30) and EXIT (12:00-23:59).
@@ -67,6 +68,15 @@ See the detailed guides below:
 ---
 
 ## 📋 Changelog
+
+### v2.0.1 (2025-11-28) - RTSP Performance Optimization
+- **🚀 40-50% CPU Reduction**: Optimized RTSP streaming pipeline.
+- **📉 Reduced Resolution**: 640x360 for better performance while maintaining quality.
+- **⚡ Faster Encoding**: INTER_AREA interpolation + Progressive JPEG (75% quality).
+- **🎯 Synchronized FPS**: 15 FPS capture/stream matching camera settings.
+- **📹 H.265 Support**: Compatible with H.265/HEVC camera streams.
+- **🐛 Bug Fixes**: Fixed recognition inconsistency ("Unknown" showing as "Verified").
+- **📊 Dashboard**: Default date range set to current month for better UX.
 
 ### v2.0.0 (2025-11-28) - Major Performance Overhaul
 - **🚀 3-5x Faster Detection**: Completely removed MediaPipe Face Mesh (468 landmarks).

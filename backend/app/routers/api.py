@@ -388,8 +388,8 @@ async def stream_camera(camera_id: int):
         
         try:
             while True:
-                # Get raw frame (800x450 optimized for quality)
-                frame = camera_service.get_frame_preview(camera_id, width=800, height=450)
+                # Get raw frame (640x360 optimized for performance)
+                frame = camera_service.get_frame_preview(camera_id, width=640, height=360)
                 
                 if frame is None:
                     time.sleep(0.05)
@@ -407,16 +407,21 @@ async def stream_camera(camera_id: int):
                 except Exception as e:
                     print(f"Drawing error: {e}")
                 
-                # Encode to JPEG (Quality 85 as requested)
-                ret, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
+                # Encode to JPEG with optimizations
+                encode_params = [
+                    int(cv2.IMWRITE_JPEG_QUALITY), 75,  # Reduced for faster encoding
+                    int(cv2.IMWRITE_JPEG_OPTIMIZE), 1,  # Optimize Huffman tables
+                    int(cv2.IMWRITE_JPEG_PROGRESSIVE), 1  # Progressive JPEG
+                ]
+                ret, buffer = cv2.imencode('.jpg', frame, encode_params)
                 
                 if ret:
                     frame_bytes = buffer.tobytes()
                     yield (b'--frame\r\n'
                            b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
                 
-                # Target 20 FPS (0.05s) to balance higher quality with bandwidth
-                time.sleep(0.05)
+                # Synchronized with camera FPS (15 FPS)
+                time.sleep(0.067)
         except GeneratorExit:
             pass
         except Exception as e:

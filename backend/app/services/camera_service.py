@@ -23,14 +23,13 @@ class CameraStream:
         if str(source).isdigit():
             source = int(source)
             
-        # Aggressive RTSP optimization for Dahua cameras
+        # Optimized RTSP settings (restored from v1.9.5)
         if isinstance(source, str) and source.startswith('rtsp'):
             if '?' not in source:
                 source = f"{source}?tcp=0"
             self.cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)
             self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            # Remove FPS limit to drain buffer faster
-            # self.cap.set(cv2.CAP_PROP_FPS, 15) 
+            self.cap.set(cv2.CAP_PROP_FPS, 20)  # Restored: Limit FPS for smoother playback
             self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'H264'))
         else:
             self.cap = cv2.VideoCapture(source)
@@ -57,14 +56,13 @@ class CameraStream:
     def _update(self):
         while self.running:
             if self.cap and self.cap.isOpened():
-                # Grab first to clear buffer if multiple frames are available
-                self.cap.grab() 
-                ret, frame = self.cap.retrieve()
+                # Use simple read() - more reliable than grab()+retrieve()
+                ret, frame = self.cap.read()
                 
                 if ret:
-                    # Resize for preview immediately (640x360 is enough for web)
-                    # This moves CPU load to capture thread (1 per frame) instead of API (N per client)
-                    preview = cv2.resize(frame, (640, 360), interpolation=cv2.INTER_NEAREST)
+                    # Resize for preview with better quality (INTER_LINEAR instead of INTER_NEAREST)
+                    # 800x450 provides better quality while still being efficient
+                    preview = cv2.resize(frame, (800, 450), interpolation=cv2.INTER_LINEAR)
                     
                     with self.lock:
                         self.frame = frame
@@ -80,8 +78,8 @@ class CameraStream:
                 time.sleep(1)
                 self._open_capture()
             
-            # Minimal sleep to prevent CPU hogging, but fast enough to drain buffer
-            time.sleep(0.005)
+            # Balanced sleep for smooth capture
+            time.sleep(0.033)  # ~30 FPS capture rate
 
     def read(self):
         with self.lock:
@@ -122,7 +120,7 @@ class CameraService:
         
         return self.cameras[camera_id].read()
 
-    def get_frame_preview(self, camera_id, width=640, height=360):
+    def get_frame_preview(self, camera_id, width=800, height=450):
         """Get low-resolution frame for web streaming (optimized)"""
         if camera_id not in self.cameras:
             return None

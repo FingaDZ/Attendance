@@ -59,6 +59,8 @@ def delete_setting(key: str, db: Session = Depends(get_db)):
 attendance_lock = threading.Lock()
 # Dictionary to store last processed time for each employee to prevent duplicate logs
 last_processed = {}
+# Dictionary to store last block reason to persist error message during debounce
+last_block_info = {}
 
 @router.post("/employees/")
 async def create_employee(
@@ -378,6 +380,18 @@ class AsyncFrameProcessor:
                                     now = time.time()
                                     if employee_id in last_processed:
                                         if now - last_processed[employee_id] < 5:
+                                            # 🔴 FIX v2.0.6: Si on est dans le debounce, on vérifie s'il y avait un blocage
+                                            # pour ré-afficher le message d'erreur (sinon ça clignote vert)
+                                            if employee_id in last_block_info:
+                                                block_data = last_block_info[employee_id]
+                                                # Vérifier si l'info de blocage est encore pertinente (< 5s)
+                                                if now - block_data["time"] < 5:
+                                                    with self.lock:
+                                                        for res in self.latest_results:
+                                                            if res.get("employee_id") == employee_id:
+                                                                res["block_reason"] = block_data["reason"]
+                                                                res["block_subtext"] = block_data["subtext"]
+                                                                break
                                             continue  # Skip, trop récent
                                     
                                     last_processed[employee_id] = now
@@ -418,6 +432,10 @@ class AsyncFrameProcessor:
                                             db.commit()
                                             
                                             print(f"✅ Auto-logged: {emp.name} - {log_type} (Conf: {confidence:.2f}, Cam: {self.camera_id})")
+                                            
+                                            # Succès : on nettoie les infos de blocage
+                                            if employee_id in last_block_info:
+                                                del last_block_info[employee_id]
                                     else:
                                         # Log bloqué - Déterminer la raison spécifique pour affichage visuel
                                         if error_msg:
@@ -451,6 +469,13 @@ class AsyncFrameProcessor:
                                             
                                             # Mettre à jour le résultat avec la raison du blocage
                                             if block_reason:
+                                                # Sauvegarder l'info de blocage pour le debounce
+                                                last_block_info[employee_id] = {
+                                                    "reason": block_reason,
+                                                    "subtext": block_subtext,
+                                                    "time": time.time()
+                                                }
+                                                
                                                 with self.lock:
                                                     for res in self.latest_results:
                                                         if res.get("employee_id") == employee_id:

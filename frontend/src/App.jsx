@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
+import LiveView from './pages/LiveView';
 import Kiosk from './pages/Kiosk';
 import Employees from './pages/Employees';
 import Reports from './pages/Reports';

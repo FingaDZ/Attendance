@@ -1,8 +1,8 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-2.0.3-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.4-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
 
-# Attendance System v2.0.3 🚀
+# Attendance System v2.0.4 🚀
 
 A state-of-the-art facial recognition attendance system designed for high accuracy and adaptability. Built with **FastAPI** (Backend) and **React** (Frontend).
 
@@ -31,6 +31,7 @@ A state-of-the-art facial recognition attendance system designed for high accura
 - **Smart Auth**: Secure WAN access with PIN protection, seamless LAN access.
 - **Reporting**: Export attendance logs to Excel/CSV.
 - **Auto-Logging**: Automatic attendance recording during live video streaming (v2.0.3).
+- **Visual Error Messages**: Clear on-screen feedback when logging is blocked (v2.0.4).
 
 ---
 
@@ -70,6 +71,13 @@ See the detailed guides below:
 ---
 
 ## 📋 Changelog
+
+### v2.0.4 (2025-11-28) - Visual Error Messages
+- **🎨 Visual Feedback**: Added color-coded error messages in live video streaming when logging is blocked.
+- **🔴 Time Constraint Errors**: Red badge for "Heure Entrée Dépassée" and "Heure Sortie Dépassée".
+- **🟠 Cooldown Warning**: Orange badge for "Temps de Travail minimum non achevé" with remaining wait time.
+- **🔵 Quota Reached**: Blue badge for "Detection Déjà Effectué" when daily limit is reached.
+- **📊 Better UX**: Users now see exactly why their attendance wasn't recorded instead of silent failures.
 
 ### v2.0.3 (2025-11-28) - Auto-Logging Restoration
 - **✅ Auto-Logging Restored**: Fixed automatic attendance recording in live video streaming (broken since v2.0.0).

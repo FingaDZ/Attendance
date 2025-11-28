@@ -414,8 +414,25 @@ class FaceService:
         conf = primary["confidence"]
         kps = np.array(primary["keypoints"])
         
+        # Vérifier s'il y a une raison de blocage
+        block_reason = primary.get("block_reason")
+        block_subtext = primary.get("block_subtext")
+        
         # Determine color and text
-        if name == "Positioning...":
+        if block_reason:
+            # Messages d'erreur de blocage avec couleurs spécifiques
+            if block_reason == "Heure Entrée Dépassée" or block_reason == "Heure Sortie Dépassée":
+                color = (0, 0, 255)  # Rouge
+            elif block_reason == "Temps de Travail minimum non achevé":
+                color = (0, 165, 255)  # Orange
+            elif block_reason == "Detection Déjà Effectué":
+                color = (255, 140, 0)  # Bleu
+            else:
+                color = (0, 0, 255)  # Rouge par défaut
+            
+            text = block_reason
+            subtext = block_subtext if block_subtext else ""
+        elif name == "Positioning...":
             color = (0, 165, 255)  # Orange
             text = "Position your face"
             subtext = "Center your face"

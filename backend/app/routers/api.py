@@ -419,9 +419,45 @@ class AsyncFrameProcessor:
                                             
                                             print(f"✅ Auto-logged: {emp.name} - {log_type} (Conf: {confidence:.2f}, Cam: {self.camera_id})")
                                     else:
-                                        # Log bloqué (contraintes non respectées)
+                                        # Log bloqué - Déterminer la raison spécifique pour affichage visuel
                                         if error_msg:
                                             print(f"⚠️ Log blocked for Emp {employee_id}: {error_msg}")
+                                            
+                                            # Ajouter la raison du blocage dans les résultats pour affichage
+                                            block_reason = None
+                                            block_subtext = None
+                                            
+                                            # Analyser le message d'erreur pour déterminer la raison
+                                            if "entrées sont autorisées uniquement entre" in error_msg:
+                                                block_reason = "Heure Entrée Dépassée"
+                                                block_subtext = "Entrée: 03h00-13h30"
+                                            elif "sorties sont autorisées uniquement entre" in error_msg:
+                                                block_reason = "Heure Sortie Dépassée"
+                                                block_subtext = "Sortie: 12h00-23h59"
+                                            elif "attendre" in error_msg.lower() and "minutes" in error_msg.lower():
+                                                # Extraire le nombre de minutes du message
+                                                import re
+                                                match = re.search(r'(\d+)\s+minutes', error_msg)
+                                                if match:
+                                                    minutes = match.group(1)
+                                                    block_reason = "Temps de Travail minimum non achevé"
+                                                    block_subtext = f"Attendre {minutes} minutes"
+                                                else:
+                                                    block_reason = "Temps de Travail minimum non achevé"
+                                                    block_subtext = "Attendre quelques minutes"
+                                            elif "déjà enregistré" in error_msg.lower():
+                                                block_reason = "Detection Déjà Effectué"
+                                                block_subtext = "1 entrée/sortie max"
+                                            
+                                            # Mettre à jour le résultat avec la raison du blocage
+                                            if block_reason:
+                                                with self.lock:
+                                                    for res in self.latest_results:
+                                                        if res.get("employee_id") == employee_id:
+                                                            res["block_reason"] = block_reason
+                                                            res["block_subtext"] = block_subtext
+                                                            break
+
                 
                 # Sleep to limit detection FPS (2.5 FPS for CPU optimization)
                 time.sleep(0.4) 

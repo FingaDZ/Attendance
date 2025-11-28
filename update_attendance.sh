@@ -20,23 +20,26 @@ echo "📥 Pulling latest code from GitHub..."
 cd /opt/Attendance
 git pull origin master
 
-# Update backend
-echo "🐍 Updating backend dependencies..."
+# 3. Update Backend Dependencies
+echo "📦 Updating backend dependencies..."
 cd backend
-source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+if [ -d "venv" ]; then
+    source venv/bin/activate
+else
+    python3.10 -m venv venv
+    source venv/bin/activate
+fi
 
-# CRITICAL: Enforce compatible versions (v1.8.0+)
-echo "🔧 Enforcing compatible library versions..."
+pip install --upgrade pip
+# v2.0.0: Uninstall MediaPipe if present
+pip uninstall -y mediapipe
+# Force reinstall to ensure clean state
+pip install -r requirements.txt
+# Ensure compatibility
 pip install "protobuf<5" "numpy<2"
 
-# Install MediaPipe if not present (v1.8.0+)
-echo "📦 Ensuring MediaPipe is installed..."
-pip install mediapipe
-
 # Verify installation
-python3 -c "import mediapipe; import insightface; print('✅ Dependencies verified')"
+python3 -c "import insightface; print('✅ Dependencies verified')"
 
 deactivate
 

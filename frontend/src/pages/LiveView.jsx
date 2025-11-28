@@ -78,8 +78,9 @@ const LiveView = () => {
                 if (selected.source === '0') {
                     startClientCamera();
                 } else {
-                    // Server mode (RTSP), nothing to start on client, just show image
-                    setIsRecognizing(true); // Server handles recognition
+                    // Server mode (RTSP), start recognition loop
+                    setIsRecognizing(true);
+                    startRecognitionLoop();
                 }
             }
         } catch (err) {
@@ -269,11 +270,16 @@ const LiveView = () => {
                         <canvas ref={canvasRef} style={{ display: 'none' }} />
                     </>
                 ) : (
-                    <img
-                        src={`/api/stream/${selectedCamera.id}`}
-                        alt="Live Stream"
-                        className="w-full h-full object-cover"
-                    />
+                    <>
+                        <img
+                            ref={imgRef}
+                            src={`/api/stream/${selectedCamera.id}/clean`}
+                            alt="Live Stream"
+                            className="w-full h-full object-cover"
+                            crossOrigin="anonymous"
+                        />
+                        <canvas ref={canvasRef} style={{ display: 'none' }} />
+                    </>
                 )}
 
                 {/* Landmark Overlay Canvas */}

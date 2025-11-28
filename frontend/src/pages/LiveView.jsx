@@ -173,12 +173,50 @@ const LiveView = () => {
                             // Log attendance if confidence > 0.85 AND name is not Unknown
                             if (confidence > 0.85 && name !== "Unknown") {
                                 const logRes = await api.post(`/log_attendance/?employee_id=${response.data.employee_id}&camera_id=${selectedCamera ? selectedCamera.name : 'Webcam'}&confidence=${confidence}`);
+
                                 if (logRes.data.status === 'logged') {
                                     playAttendanceSound(logRes.data.type);
+                                } else if (logRes.data.status === 'blocked') {
+                                    // 🔴 GESTION DES BLOCAGES (v2.0.7)
+                                    const errorMsg = logRes.data.message || "";
+                                    let blockReason = "Log Blocked";
+                                    let blockSubtext = errorMsg;
+
+                                    // Analyser le message d'erreur (Logique miroir du backend)
+                                    if (errorMsg.includes("entrées sont autorisées uniquement entre")) {
+                                        blockReason = "Heure Entrée Dépassée";
+                                        blockSubtext = "Entrée: 03h00-13h30";
+                                    } else if (errorMsg.includes("sorties sont autorisées uniquement entre")) {
+                                        blockReason = "Heure Sortie Dépassée";
+                                        blockSubtext = "Sortie: 12h00-23h59";
+                                    } else if (errorMsg.toLowerCase().includes("attendre") && errorMsg.toLowerCase().includes("minutes")) {
+                                        blockReason = "Temps de Travail minimum non achevé";
+                                        // Extraire les minutes si possible, sinon garder le message
+                                        const match = errorMsg.match(/(\d+)\s+minutes/);
+                                        if (match) {
+                                            blockSubtext = `Attendre ${match[1]} minutes`;
+                                        } else {
+                                            blockSubtext = "Attendre quelques minutes";
+                                        }
+                                    } else if (errorMsg.toLowerCase().includes("déjà enregistré")) {
+                                        blockReason = "Detection Déjà Effectué";
+                                        blockSubtext = "1 entrée/sortie max";
+                                    }
+
+                                    // Injecter l'erreur dans le résultat pour affichage
+                                    setCurrentResults([{
+                                        name,
+                                        confidence,
+                                        bbox: [0, 0, 0, 0],
+                                        landmarks: landmarks || [],
+                                        blockReason,
+                                        blockSubtext
+                                    }]);
+                                    return; // Stop here to keep the error displayed
                                 }
                             }
 
-                            // Update overlay with results
+                            // Update overlay with results (if not blocked)
                             setCurrentResults([{
                                 name,
                                 confidence,
@@ -216,6 +254,21 @@ const LiveView = () => {
 
         const result = currentResults[0];
         const conf = result.confidence;
+
+        // 🔴 GESTION DES BLOCAGES (v2.0.7)
+        if (result.blockReason) {
+            if (result.blockReason === "Heure Entrée Dépassée" || result.blockReason === "Heure Sortie Dépassée") {
+                return { color: '#FF0000', text: result.blockReason, subtext: result.blockSubtext, verified: false, positioning: false, blocked: true }; // Rouge
+            }
+            if (result.blockReason === "Temps de Travail minimum non achevé") {
+                return { color: '#FFA500', text: result.blockReason, subtext: result.blockSubtext, verified: false, positioning: false, blocked: true }; // Orange
+            }
+            if (result.blockReason === "Detection Déjà Effectué") {
+                return { color: '#0099FF', text: result.blockReason, subtext: result.blockSubtext, verified: false, positioning: false, blocked: true }; // Bleu
+            }
+            // Défaut pour autres blocages
+            return { color: '#FF0000', text: result.blockReason, subtext: result.blockSubtext, verified: false, positioning: false, blocked: true };
+        }
 
         // Check if user is positioning (name is "Positioning...")
         if (result.name === "Positioning...") {
@@ -339,6 +392,14 @@ const LiveView = () => {
                                 <p className="text-2xl font-bold">{overlayStyle.name}</p>
                                 <p className="text-lg">{overlayStyle.text}</p>
                                 <p className="text-sm mt-2">✓ Verified</p>
+                            </div>
+                        </div>
+                    ) : overlayStyle.blocked ? (
+                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                            <div style={{ backgroundColor: overlayStyle.color }} className="bg-opacity-90 text-white px-8 py-4 rounded-lg shadow-lg">
+                                <User className="w-16 h-16 mx-auto mb-2" />
+                                <p className="text-2xl font-bold">{overlayStyle.text}</p>
+                                <p className="text-lg">{overlayStyle.subtext}</p>
                             </div>
                         </div>
                     ) : (

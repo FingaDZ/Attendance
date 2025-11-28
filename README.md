@@ -1,8 +1,8 @@
 ---
 ---
-![Version](https://img.shields.io/badge/version-2.0.6-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.7-green.svg) ![Python](https://img.shields.io/badge/python-3.10-blue.svg) ![React](https://img.shields.io/badge/react-19-blue.svg)
 
-# Attendance System v2.0.6 🚀
+# Attendance System v2.0.7 🚀
 
 A state-of-the-art facial recognition attendance system designed for high accuracy and adaptability. Built with **FastAPI** (Backend) and **React** (Frontend).
 
@@ -71,6 +71,11 @@ See the detailed guides below:
 ---
 
 ## 📋 Changelog
+
+### v2.0.7 (2025-11-28) - Frontend Error Handling Fix
+- **🐛 Bug Fix**: Fixed issue where frontend was ignoring "blocked" responses from the backend, preventing error messages from displaying.
+- **👁️ Client-Side Display**: Added logic in `LiveView.jsx` to parse and display error messages (Red/Orange/Blue) directly from the API response.
+- **✅ Universal Fix**: Works for both Client Mode (Webcam) and Server Mode (RTSP) as both use the same logging endpoint.
 
 ### v2.0.6 (2025-11-28) - Debounce Fix
 - **🐛 Bug Fix**: Fixed issue where error messages (Red/Orange/Blue badges) would disappear/flicker during the 5-second debounce period.

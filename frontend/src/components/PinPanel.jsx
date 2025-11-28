@@ -49,9 +49,46 @@ const PinPanel = ({ onAuthSuccess }) => {
         }
     };
 
+    const playAttentionBeep = () => {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.type = 'sine';
+            osc.frequency.value = 880; // A5 (High pitch for attention)
+
+            const now = ctx.currentTime;
+
+            // 3 bips de 500ms avec courte pause
+            // Beep 1
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+
+            // Beep 2
+            gain.gain.setValueAtTime(0.1, now + 0.6);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+
+            // Beep 3
+            gain.gain.setValueAtTime(0.1, now + 1.2);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 1.7);
+
+            osc.start(now);
+            osc.stop(now + 1.8);
+        } catch (e) {
+            console.error("AudioContext error:", e);
+        }
+    };
+
     const handleEnter = async () => {
         if (step === 'ID') {
-            if (empId.length > 0) setStep('PIN');
+            if (empId.length > 0) {
+                playAttentionBeep(); // Signal sonore pour attirer l'attention
+                setStep('PIN');
+            }
         } else {
             if (pin.length > 0) {
                 await submitPin();

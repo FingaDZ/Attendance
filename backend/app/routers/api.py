@@ -209,7 +209,7 @@ def verify_pin(employee_id: int = Form(...), pin: str = Form(...), db: Session =
         db.commit()
         return {"status": "verified", "name": emp.name, "type": log_type}
     else:
-        raise HTTPException(status_code=401, detail="Invalid PIN")
+        raise HTTPException(status_code=403, detail="Invalid PIN")
 
 @router.get("/employees/")
 def read_employees(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

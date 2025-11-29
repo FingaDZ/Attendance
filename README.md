@@ -31,25 +31,6 @@ Powered by **FastAPI** and **Python 3.10**.
 - **`app/services/adaptive_training_service.py`**: Logic for automatic profile updates.
 - **`app/services/liveness_service.py`**: Anti-spoofing logic.
 - **`app/routers/api.py`**: REST API endpoints.
-- **`app/models.py`**: SQLAlchemy database models.
-
-### Frontend (`/frontend`)
-Built with **React 19**, **Vite**, and **TailwindCSS**.
-- **`src/pages/Dashboard.jsx`**: Real-time camera feed and attendance status.
-- **`src/pages/Employees.jsx`**: Employee management (Add/Edit/Delete).
-- **`src/pages/AttendanceLogs.jsx`**: View and export logs.
-
----
-
-## 🚀 Deployment
-
-### Quick Start (Ubuntu 22.04)
-We provide a dedicated script for easy deployment on Ubuntu.
-
-```bash
-chmod +x deploy_ubuntu.sh
-- **🧠 Smart Persistence**: System now remembers the blocking reason during the debounce cooldown to ensure consistent visual feedback.
-- **👁️ UX Improvement**: Stable error display instead of flashing "Verified" green status.
 
 ### v2.0.5 (2025-11-28) - Critical Hotfix
 - **🔧 Critical Fix**: Resolved API endpoint conflict (`/stream/{camera_id}`) that prevented v2.0.4 features from loading.

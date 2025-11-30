@@ -101,13 +101,10 @@ const PinPanel = ({ onAuthSuccess }) => {
         try {
             const formData = new FormData();
             formData.append('pin', pin);
+            formData.append('employee_id', empId);
 
-            // Note: The backend endpoint for PIN auth is /verify_pin/ (based on api.py analysis)
-            // Or we might need to check how it's implemented. 
-            // Let's assume /verify_pin/ exists or use the logic from Dashboard.
-            // Dashboard uses: api.post('/verify_pin/', formData)
-
-            const response = await api.post(`/verify_pin/${empId}`, formData);
+            // Fixed: Use /verify-pin/ (with dash) and employee_id in body
+            const response = await api.post('/verify-pin/', formData);
             const result = parseAttendanceResponse(response.data);
 
             if (result.success) {

@@ -102,12 +102,10 @@ const PinPanel = ({ onAuthSuccess }) => {
             const formData = new FormData();
             formData.append('pin', pin);
 
-            // Note: The backend endpoint for PIN auth is /verify_pin/ (based on api.py analysis)
-            // Or we might need to check how it's implemented. 
-            // Let's assume /verify_pin/ exists or use the logic from Dashboard.
-            // Dashboard uses: api.post('/verify_pin/', formData)
+            formData.append('employee_id', empId);
 
-            const response = await api.post(`/verify_pin/${empId}`, formData);
+            // Correct endpoint: /verify-pin/ (POST)
+            const response = await api.post('/verify-pin/', formData);
             const result = parseAttendanceResponse(response.data);
 
             if (result.success) {
@@ -125,6 +123,8 @@ const PinPanel = ({ onAuthSuccess }) => {
                     subtext: result.subtext,
                     color: result.color
                 });
+                // Play sound for blocked cases if handler provided
+                if (onAuthSuccess) onAuthSuccess(result);
             } else {
                 // Should not happen with parseAttendanceResponse for verified/blocked
                 // But handles unexpected cases

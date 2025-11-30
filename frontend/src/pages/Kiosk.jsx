@@ -27,6 +27,8 @@ const Kiosk = () => {
     const [loadingCam, setLoadingCam] = useState(true);
     const [facingMode, setFacingMode] = useState('user');
 
+    const [freezeOverlay, setFreezeOverlay] = useState(false);
+
     // --- Clock State ---
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -108,6 +110,9 @@ const Kiosk = () => {
         const interval = setInterval(async () => {
             if (isProcessing) return;
 
+            // Skip if overlay is frozen (showing a result)
+            if (freezeOverlay) return;
+
             const source = videoRef.current || imgRef.current;
 
             if (source && canvasRef.current) {
@@ -156,6 +161,13 @@ const Kiosk = () => {
                                         name, confidence, landmarks: landmarks || [],
                                         verified: true
                                     }]);
+                                    // Freeze overlay for 3 seconds
+                                    setFreezeOverlay(true);
+                                    setTimeout(() => {
+                                        setFreezeOverlay(false);
+                                        setCurrentResults([]); // Clear after freeze
+                                    }, 3000);
+
                                 } else if (result.blocked) {
                                     // Play specific sound if defined (ALREADY_LOGGED, MIN_TIME)
                                     if (result.sound) {
@@ -169,16 +181,24 @@ const Kiosk = () => {
                                         blockSubtext: result.subtext,
                                         blockColor: result.color
                                     }]);
-                                    return; // Keep error displayed
+                                    // Freeze overlay for 3 seconds
+                                    setFreezeOverlay(true);
+                                    setTimeout(() => {
+                                        setFreezeOverlay(false);
+                                        setCurrentResults([]); // Clear after freeze
+                                    }, 3000);
+                                    return;
                                 }
                             }
 
-                            // Update overlay if not blocked
-                            setCurrentResults([{
-                                name, confidence, landmarks: landmarks || []
-                            }]);
+                            // Update overlay if not blocked/verified (just tracking)
+                            if (!freezeOverlay) {
+                                setCurrentResults([{
+                                    name, confidence, landmarks: landmarks || []
+                                }]);
+                            }
                         } else {
-                            setCurrentResults([]);
+                            if (!freezeOverlay) setCurrentResults([]);
                         }
                     } catch (err) {
                         // Ignore minor errors
@@ -219,7 +239,7 @@ const Kiosk = () => {
         if (result.confidence > 0 && result.confidence <= 0.85) {
             return {
                 color: '#F59E0B', // Amber
-                title: 'Confiance Faible / ثقة منخفضة',
+                title: 'Faible Précision / دقة منخفضة',
                 subtitle: 'Approchez-vous / اقترب أكثر'
             };
         }
@@ -297,9 +317,9 @@ const Kiosk = () => {
                 {/* Confidence Score (Top Center) */}
                 {currentResults.length > 0 && currentResults[0].confidence > 0 && (
                     <div className={`absolute top-6 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-white font-bold text-sm md:text-base shadow-lg transition-colors duration-300 ${currentResults[0].confidence < 0.70 ? 'bg-red-500' :
-                            currentResults[0].confidence < 0.80 ? 'bg-orange-500' :
-                                currentResults[0].confidence < 0.85 ? 'bg-blue-500' :
-                                    'bg-green-500'
+                        currentResults[0].confidence < 0.80 ? 'bg-orange-500' :
+                            currentResults[0].confidence < 0.85 ? 'bg-blue-500' :
+                                'bg-green-500'
                         }`}>
                         {(currentResults[0].confidence * 100).toFixed(1)}%
                     </div>
@@ -310,8 +330,11 @@ const Kiosk = () => {
             <div className="h-[40vh] md:h-full md:w-[350px] lg:w-[400px] border-t md:border-t-0 md:border-l border-gray-800 z-10">
                 <PinPanel
                     onAuthSuccess={(result) => {
-                        playAttendanceSound(result.type);
-                        // Optional: Show success in video overlay too?
+                        if (result.success) {
+                            playAttendanceSound(result.type);
+                        } else if (result.blocked && result.sound) {
+                            playAttendanceSound(result.sound);
+                        }
                     }}
                 />
             </div>

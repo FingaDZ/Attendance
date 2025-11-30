@@ -229,7 +229,7 @@ async def verify_pin(
         db.commit()
         return {"status": "verified", "name": emp.name, "type": log_type}
     else:
-        raise HTTPException(status_code=401, detail="Invalid PIN")
+        raise HTTPException(status_code=403, detail="Invalid PIN")
 
 @router.get("/logs/{log_id}/photo")
 def get_log_photo(log_id: int, db: Session = Depends(get_db)):

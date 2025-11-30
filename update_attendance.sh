@@ -59,6 +59,10 @@ if [ -f "package.json" ]; then
 fi
 npm run build
 
+# Ensure permissions
+echo "🔒 Setting permissions..."
+chmod -R 755 dist
+
 # Restart services
 echo "🔄 Restarting services..."
 sudo systemctl start attendance-backend attendance-frontend

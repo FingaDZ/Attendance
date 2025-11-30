@@ -212,7 +212,10 @@ async def verify_pin(
         # v2.11.0: Capture photo if provided
         photo_data = None
         if photo:
+            print(f"DEBUG: Received photo for PIN auth. Filename: {photo.filename}")
             photo_data = await photo.read()
+        else:
+            print("DEBUG: No photo received for PIN auth")
 
         log = AttendanceLog(
             employee_id=emp.id, 

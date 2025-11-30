@@ -28,9 +28,16 @@ const PinPanel = ({ onAuthSuccess }) => {
                     videoRef.current.play();
                 }
                 setCameraReady(true);
+                console.log("Camera started successfully");
             } catch (err) {
                 console.warn('Camera not available for photo capture:', err);
                 setCameraReady(false);
+                // Visual feedback for debug
+                setFeedback({
+                    reason: 'Info Caméra',
+                    subtext: 'Caméra non disponible (HTTPS requis?)',
+                    color: '#F59E0B'
+                });
             }
         };
 
@@ -151,6 +158,7 @@ const PinPanel = ({ onAuthSuccess }) => {
         try {
             // v2.11.0: Capture photo before sending
             const photoBase64 = capturePhoto();
+            console.log("Captured photo:", photoBase64 ? "Success (Base64 length: " + photoBase64.length + ")" : "Failed - Camera not ready");
 
             const formData = new FormData();
             formData.append('pin', pin);

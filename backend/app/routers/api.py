@@ -811,7 +811,8 @@ def read_attendance(
         "confidence": log.confidence,
         "type": log.type,
         "worked_minutes": log.worked_minutes,
-        "timestamp": log.timestamp.isoformat()
+        "timestamp": log.timestamp.isoformat(),
+        "photo_capture": log.photo_capture is not None  # v2.11.0: Flag to show View button
     } for log in logs]
 
 @router.delete("/attendance/{log_id}")

@@ -51,6 +51,11 @@ chmod +x deploy_ubuntu.sh
 - **🧠 Smart Persistence**: System now remembers the blocking reason during the debounce cooldown to ensure consistent visual feedback.
 - **👁️ UX Improvement**: Stable error display instead of flashing "Verified" green status.
 
+### v2.8.0 (2025-11-30) - Kiosk UI & Localization Update
+- **🌍 Bilingual Interface**: Kiosk overlay messages are now in **French** and **Arabic** (using Cairo font).
+- **🎯 Enhanced Positioning**: The face positioning circle has been enlarged by **25%** for better user guidance.
+- **🛠️ Automated Deployment**: Frontend build steps are now integrated into the update scripts.
+
 ### v2.0.5 (2025-11-28) - Critical Hotfix
 - **🔧 Critical Fix**: Resolved API endpoint conflict (`/stream/{camera_id}`) that prevented v2.0.4 features from loading.
 - **✅ Feature Activation**: Visual error messages and auto-logging logic are now correctly enforced.

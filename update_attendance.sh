@@ -54,7 +54,9 @@ deactivate
 # Update frontend
 echo "🎨 Rebuilding frontend..."
 cd ../frontend
-npm install
+if [ -f "package.json" ]; then
+    npm install
+fi
 npm run build
 
 # Restart services

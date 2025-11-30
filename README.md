@@ -56,6 +56,12 @@ chmod +x deploy_ubuntu.sh
 - **🎯 Enhanced Positioning**: The face positioning circle has been enlarged by **25%** for better user guidance.
 - **🛠️ Automated Deployment**: Frontend build steps are now integrated into the update scripts.
 
+### v2.9.0 (2025-11-30) - Audio Feedback & UI Polish
+- **🔊 Enhanced Audio**: Added specific audio feedback for "Already Registered" and "Minimum Time Not Met" scenarios.
+- **📊 Confidence Score**: Real-time confidence score display in Kiosk mode with color-coded quality indicators (Red/Orange/Blue/Green).
+- **🛠️ Script Updates**: Updated `update_attendance.sh` to include automated frontend building.
+- **🧹 Cleanup**: Removed redundant scripts and optimized project structure.
+
 ### v2.0.5 (2025-11-28) - Critical Hotfix
 - **🔧 Critical Fix**: Resolved API endpoint conflict (`/stream/{camera_id}`) that prevented v2.0.4 features from loading.
 - **✅ Feature Activation**: Visual error messages and auto-logging logic are now correctly enforced.

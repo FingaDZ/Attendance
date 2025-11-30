@@ -19,6 +19,7 @@ export const parseAttendanceResponse = (data) => {
         let blockReason = "Log Blocked";
         let blockSubtext = msg;
         let color = "#FF0000"; // Rouge par défaut
+        let sound = null;
 
         // Analyse du message d'erreur (Miroir du backend)
         if (msg.includes("entrées sont autorisées uniquement entre")) {
@@ -34,6 +35,7 @@ export const parseAttendanceResponse = (data) => {
         else if (msg.toLowerCase().includes("attendre") && msg.toLowerCase().includes("minutes")) {
             blockReason = "Temps minimum non achevé / الحد الأدنى للعمل لم يكتمل";
             color = "#FFA500"; // Orange
+            sound = "MIN_TIME"; // Trigger mintime.wav
 
             // Extraire les minutes si possible
             const match = msg.match(/(\d+)\s+minutes/);
@@ -47,6 +49,7 @@ export const parseAttendanceResponse = (data) => {
             blockReason = "Déjà enregistré / تم التسجيل مسبقاً";
             blockSubtext = "1 entrée/sortie max / تسجيل واحد كحد أقصى";
             color = "#0099FF"; // Bleu
+            sound = "ALREADY_LOGGED"; // Trigger inok.wav
         }
 
         return {
@@ -54,7 +57,8 @@ export const parseAttendanceResponse = (data) => {
             blocked: true,
             reason: blockReason,
             subtext: blockSubtext,
-            color: color
+            color: color,
+            sound: sound || null
         };
     }
 

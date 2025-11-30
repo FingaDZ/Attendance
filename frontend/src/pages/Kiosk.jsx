@@ -5,7 +5,13 @@ import PinPanel from '../components/PinPanel';
 import { parseAttendanceResponse } from '../utils/attendanceUtils';
 
 const playAttendanceSound = (logType) => {
-    const audio = new Audio(logType === 'ENTRY' ? '/merci.wav' : '/fin.wav');
+    let audioFile = '/merci.wav'; // Default SUCCESS
+
+    if (logType === 'EXIT') audioFile = '/fin.wav';
+    else if (logType === 'ALREADY_LOGGED') audioFile = '/inok.wav';
+    else if (logType === 'MIN_TIME') audioFile = '/mintime.wav';
+
+    const audio = new Audio(audioFile);
     audio.volume = 0.5;
     audio.play().catch(err => console.log('Audio play failed:', err));
 };
@@ -151,6 +157,11 @@ const Kiosk = () => {
                                         verified: true
                                     }]);
                                 } else if (result.blocked) {
+                                    // Play specific sound if defined (ALREADY_LOGGED, MIN_TIME)
+                                    if (result.sound) {
+                                        playAttendanceSound(result.sound);
+                                    }
+
                                     setCurrentResults([{
                                         name, confidence, landmarks: landmarks || [],
                                         blocked: true,
@@ -282,6 +293,17 @@ const Kiosk = () => {
                 <div className="absolute top-6 right-6 opacity-50 text-white/80 font-semibold tracking-widest text-xs md:text-sm z-20 pointer-events-none shadow-black drop-shadow-md">
                     Powered by <span className="text-blue-400 font-bold">AIRBAND</span>
                 </div>
+
+                {/* Confidence Score (Top Center) */}
+                {currentResults.length > 0 && currentResults[0].confidence > 0 && (
+                    <div className={`absolute top-6 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-white font-bold text-sm md:text-base shadow-lg transition-colors duration-300 ${currentResults[0].confidence < 0.70 ? 'bg-red-500' :
+                            currentResults[0].confidence < 0.80 ? 'bg-orange-500' :
+                                currentResults[0].confidence < 0.85 ? 'bg-blue-500' :
+                                    'bg-green-500'
+                        }`}>
+                        {(currentResults[0].confidence * 100).toFixed(1)}%
+                    </div>
+                )}
             </div>
 
             {/* --- RIGHT: PIN PANEL (30%) --- */}

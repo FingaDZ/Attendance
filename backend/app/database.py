@@ -21,7 +21,8 @@ def get_db():
 def migrate_database_schema():
     """
     Auto-migration for v1.6.5: Add photo4-6 and embedding4-6 columns if they don't exist.
-    This ensures backward compatibility when upgrading from v1.6.0 to v1.6.5.
+    v2.11.0: Add photo_capture column to attendance_logs.
+    This ensures backward compatibility when upgrading.
     """
     inspector = inspect(engine)
     
@@ -31,7 +32,7 @@ def migrate_database_schema():
         Base.metadata.create_all(bind=engine)
         return
     
-    # Get existing columns
+    # Get existing columns for employees
     existing_columns = [col['name'] for col in inspector.get_columns('employees')]
     
     # Define required columns for v1.6.5
@@ -39,7 +40,7 @@ def migrate_database_schema():
     missing_columns = [col for col in required_columns if col not in existing_columns]
     
     if missing_columns:
-        print(f"[Migration] Adding missing columns: {missing_columns}")
+        print(f"[Migration] Adding missing columns to employees: {missing_columns}")
         
         # Add missing columns using raw SQL (SQLite doesn't support adding multiple columns at once)
         with engine.connect() as conn:
@@ -71,6 +72,24 @@ def migrate_database_schema():
                 except Exception as e:
                     print(f"  ✗ Error duplicating photos: {e}")
         
-        print("[Migration] Database migration completed!")
+        print("[Migration] Employee table migration completed!")
     else:
-        print("[Migration] Database schema is up to date (v1.6.5)")
+        print("[Migration] Employee table schema is up to date (v1.6.5)")
+    
+    # v2.11.0: Check attendance_logs table for photo_capture column
+    if 'attendance_logs' in inspector.get_table_names():
+        logs_columns = [col['name'] for col in inspector.get_columns('attendance_logs')]
+        
+        if 'photo_capture' not in logs_columns:
+            print("[Migration v2.11.0] Adding photo_capture column to attendance_logs...")
+            try:
+                with engine.connect() as conn:
+                    conn.execute(text("ALTER TABLE attendance_logs ADD COLUMN photo_capture BLOB"))
+                    conn.commit()
+                    print("  ✓ Added photo_capture column")
+            except Exception as e:
+                if "duplicate column name" not in str(e).lower():
+                    print(f"  ✗ Error adding photo_capture: {e}")
+        else:
+            print("[Migration v2.11.0] photo_capture column already exists")
+

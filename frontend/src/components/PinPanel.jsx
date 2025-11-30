@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Delete, Check, AlertTriangle, User } from 'lucide-react';
 import api from '../api';
 import { parseAttendanceResponse } from '../utils/attendanceUtils';
@@ -9,6 +9,39 @@ const PinPanel = ({ onAuthSuccess }) => {
     const [step, setStep] = useState('ID'); // 'ID' or 'PIN'
     const [status, setStatus] = useState('idle'); // idle, loading, success, error, blocked
     const [feedback, setFeedback] = useState(null); // { reason, subtext, color }
+
+    // v2.11.0: Camera for photo capture
+    const videoRef = useRef(null);
+    const [stream, setStream] = useState(null);
+    const [cameraReady, setCameraReady] = useState(false);
+
+    // v2.11.0: Initialize camera (silent, background)
+    useEffect(() => {
+        const startCamera = async () => {
+            try {
+                const mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480 }
+                });
+                setStream(mediaStream);
+                if (videoRef.current) {
+                    videoRef.current.srcObject = mediaStream;
+                    videoRef.current.play();
+                }
+                setCameraReady(true);
+            } catch (err) {
+                console.warn('Camera not available for photo capture:', err);
+                setCameraReady(false);
+            }
+        };
+
+        startCamera();
+
+        return () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, []);
 
     // Auto-reset after inactivity or success
     useEffect(() => {
@@ -27,6 +60,23 @@ const PinPanel = ({ onAuthSuccess }) => {
         setStep('ID');
         setStatus('idle');
         setFeedback(null);
+    };
+
+    // v2.11.0: Capture photo from video stream
+    const capturePhoto = () => {
+        if (!cameraReady || !videoRef.current) return null;
+
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(videoRef.current, 0, 0, 640, 480);
+            return canvas.toDataURL('image/jpeg', 0.8);
+        } catch (err) {
+            console.error('Photo capture failed:', err);
+            return null;
+        }
     };
 
     const handleNumberClick = (num) => {
@@ -99,10 +149,18 @@ const PinPanel = ({ onAuthSuccess }) => {
     const submitPin = async () => {
         setStatus('loading');
         try {
+            // v2.11.0: Capture photo before sending
+            const photoBase64 = capturePhoto();
+
             const formData = new FormData();
             formData.append('pin', pin);
-
             formData.append('employee_id', empId);
+
+            // v2.11.0: Add photo if captured
+            if (photoBase64) {
+                const photoBlob = await fetch(photoBase64).then(r => r.blob());
+                formData.append('photo', photoBlob, 'capture.jpg');
+            }
 
             // Correct endpoint: /verify-pin/ (POST)
             const response = await api.post('/verify-pin/', formData);
@@ -129,21 +187,20 @@ const PinPanel = ({ onAuthSuccess }) => {
                 // Should not happen with parseAttendanceResponse for verified/blocked
                 // But handles unexpected cases
                 setStatus('error');
-                setFeedback({ reason: 'Erreur', subtext: 'Réponse inattendue', color: '#EF4444' });
+                setFeedback({
+                    reason: 'Erreur',
+                    subtext: 'Erreur inconnue',
+                    color: '#FF0000'
+                });
             }
-
-        } catch (err) {
-            console.error("PIN Auth Error:", err);
+        } catch (error) {
+            console.error('PIN Auth Error:', error);
             setStatus('error');
-            const msg = err.response?.data?.detail || "Erreur de connexion";
-
-            if (msg === "Invalid PIN") {
-                setFeedback({ reason: 'PIN Incorrect', subtext: 'Veuillez réessayer', color: '#EF4444' });
-            } else if (msg === "Employee not found") {
-                setFeedback({ reason: 'ID Inconnu', subtext: 'Employé non trouvé', color: '#EF4444' });
-            } else {
-                setFeedback({ reason: 'Erreur', subtext: msg, color: '#EF4444' });
-            }
+            setFeedback({
+                reason: 'Erreur',
+                subtext: error.response?.data?.detail || 'Erreur de connexion',
+                color: '#FF0000'
+            });
         }
     };
 
@@ -209,10 +266,21 @@ const PinPanel = ({ onAuthSuccess }) => {
                 </button>
             </div>
 
+
+
+            {/* v2.11.0: Hidden video for photo capture */}
+            <video
+                ref={videoRef}
+                style={{ display: 'none' }}
+                autoPlay
+                playsInline
+                muted
+            />
+
             <div className="mt-2 md:mt-8 text-center text-gray-600 text-[10px] md:text-xs">
-                Mode Kiosque Sécurisé v2.10.0
+                Mode Kiosque Sécurisé v2.11.0
             </div>
-        </div>
+        </div >
     );
 };
 

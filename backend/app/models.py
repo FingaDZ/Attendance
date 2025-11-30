@@ -36,6 +36,7 @@ class AttendanceLog(Base):
     confidence = Column(Float)
     type = Column(String, nullable=True) # 'ENTRY' or 'EXIT'
     worked_minutes = Column(Integer, nullable=True) # Minutes worked for the day
+    photo_capture = Column(LargeBinary, nullable=True) # v2.11.0: Photo captured during attendance (PIN or Face)
     timestamp = Column(DateTime(timezone=False), default=datetime.datetime.now, index=True)
 
 class Camera(Base):

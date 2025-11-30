@@ -193,7 +193,12 @@ def get_employee_photo(emp_id: int, photo_num: int = 1, db: Session = Depends(ge
     return StreamingResponse(io.BytesIO(photo), media_type="image/jpeg")
 
 @router.post("/verify-pin/")
-def verify_pin(employee_id: int = Form(...), pin: str = Form(...), db: Session = Depends(get_db)):
+async def verify_pin(
+    employee_id: int = Form(...), 
+    pin: str = Form(...),
+    photo: UploadFile = File(None),  # v2.11.0: Optional photo capture
+    db: Session = Depends(get_db)
+):
     emp = db.query(Employee).filter(Employee.id == employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -204,12 +209,37 @@ def verify_pin(employee_id: int = Form(...), pin: str = Form(...), db: Session =
         if not log_type:
             return {"status": "blocked", "name": emp.name, "message": error_msg}
 
-        log = AttendanceLog(employee_id=emp.id, employee_name=emp.name, camera_id="PIN", confidence=1.0, type=log_type)
+        # v2.11.0: Capture photo if provided
+        photo_data = None
+        if photo:
+            photo_data = await photo.read()
+
+        log = AttendanceLog(
+            employee_id=emp.id, 
+            employee_name=emp.name, 
+            camera_id="PIN", 
+            confidence=1.0, 
+            type=log_type,
+            photo_capture=photo_data  # v2.11.0
+        )
         db.add(log)
         db.commit()
         return {"status": "verified", "name": emp.name, "type": log_type}
     else:
         raise HTTPException(status_code=401, detail="Invalid PIN")
+
+@router.get("/logs/{log_id}/photo")
+def get_log_photo(log_id: int, db: Session = Depends(get_db)):
+    """v2.11.0: Retrieve photo captured during attendance log"""
+    log = db.query(AttendanceLog).filter(AttendanceLog.id == log_id).first()
+    if not log:
+        raise HTTPException(status_code=404, detail="Log not found")
+    
+    if not log.photo_capture:
+        raise HTTPException(status_code=404, detail="No photo available for this log")
+    
+    return StreamingResponse(io.BytesIO(log.photo_capture), media_type="image/jpeg")
+
 
 @router.get("/employees/")
 def read_employees(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
-import { Clock, UserCheck, Lock, Trash2, Download, Filter, UserX, LogIn, LogOut } from 'lucide-react';
+import { Clock, UserCheck, Lock, Trash2, Download, Filter, UserX, LogIn, LogOut, Camera, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -46,6 +46,20 @@ const Dashboard = () => {
     const [pinEmpId, setPinEmpId] = useState('');
     const [pinCode, setPinCode] = useState('');
     const [pinStatus, setPinStatus] = useState(null);
+
+    // v2.11.0: Photo Modal
+    const [selectedPhoto, setSelectedPhoto] = useState(null);
+    const [showPhotoModal, setShowPhotoModal] = useState(false);
+
+    const openPhotoModal = (logId) => {
+        setSelectedPhoto(`/api/logs/${logId}/photo`);
+        setShowPhotoModal(true);
+    };
+
+    const closePhotoModal = () => {
+        setShowPhotoModal(false);
+        setSelectedPhoto(null);
+    };
 
     useEffect(() => {
         fetchData();
@@ -336,6 +350,7 @@ const Dashboard = () => {
                                 <th className="px-6 py-3">Employee</th>
                                 <th className="px-6 py-3">Type</th>
                                 <th className="px-6 py-3">Camera</th>
+                                <th className="px-6 py-3">Photo</th>
                                 <th className="px-6 py-3">Confidence</th>
                                 <th className="px-6 py-3">Worked Hours</th>
                                 <th className="px-6 py-3 text-right">Actions</th>
@@ -364,6 +379,18 @@ const Dashboard = () => {
                                             }`}>
                                             {log.camera_id}
                                         </span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {log.photo_capture ? (
+                                            <button
+                                                onClick={() => openPhotoModal(log.id)}
+                                                className="text-blue-600 hover:text-blue-800 flex items-center"
+                                            >
+                                                <Camera className="w-4 h-4 mr-1" /> View
+                                            </button>
+                                        ) : (
+                                            <span className="text-gray-400 text-xs">-</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">{(log.confidence * 100).toFixed(1)}%</td>
                                     <td className="px-6 py-4 font-medium">
@@ -451,6 +478,35 @@ const Dashboard = () => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* v2.11.0: Photo Modal */}
+            {showPhotoModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4" onClick={closePhotoModal}>
+                    <div className="bg-white rounded-xl overflow-hidden max-w-2xl w-full relative" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center p-4 border-b">
+                            <h3 className="text-lg font-bold">Captured Photo</h3>
+                            <button onClick={closePhotoModal} className="text-gray-500 hover:text-gray-700">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        <div className="p-4 flex justify-center bg-gray-100">
+                            {selectedPhoto ? (
+                                <img
+                                    src={selectedPhoto}
+                                    alt="Attendance Capture"
+                                    className="max-h-[60vh] rounded shadow-lg"
+                                    onError={(e) => {
+                                        e.target.onerror = null;
+                                        e.target.src = 'https://via.placeholder.com/640x480?text=Photo+Error';
+                                    }}
+                                />
+                            ) : (
+                                <div className="h-64 flex items-center justify-center text-gray-400">Loading...</div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

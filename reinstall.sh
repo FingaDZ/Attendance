@@ -105,6 +105,19 @@ fi
 cd ..
 info "Dépendances installées"
 
+# Étape 6.5 : Installer les dépendances frontend et build
+info "Installation du Frontend..."
+cd frontend
+npm install
+npm run build
+
+if [ $? -ne 0 ]; then
+    error "Échec de la compilation du Frontend"
+    exit 1
+fi
+cd ..
+info "Frontend installé et compilé"
+
 # Étape 7 : Redémarrer le service
 info "Redémarrage du service backend..."
 

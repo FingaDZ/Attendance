@@ -64,6 +64,25 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Étape 3.5 : Mettre à jour le Frontend
+info "Mise à jour du Frontend..."
+cd frontend
+# Installation des dépendances si package.json a changé
+if [ -f "package.json" ]; then
+    info "Installation des dépendances frontend..."
+    npm install
+fi
+
+# Build du frontend
+info "Compilation du Frontend (Build)..."
+npm run build
+
+if [ $? -ne 0 ]; then
+    error "Échec de la compilation du Frontend"
+    exit 1
+fi
+cd ..
+
 # Afficher la version actuelle
 CURRENT_VERSION=$(git log --oneline -1)
 info "Version actuelle : $CURRENT_VERSION"

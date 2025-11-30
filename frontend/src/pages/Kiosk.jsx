@@ -190,49 +190,39 @@ const Kiosk = () => {
         if (result.blocked) {
             return {
                 color: result.blockColor,
-                title: result.blockReason,
-                subtitle: result.blockSubtext,
-                icon: 'alert'
+                title: result.blockReason, // Will be translated in attendanceUtils
+                subtitle: result.blockSubtext // Will be translated in attendanceUtils
             };
         }
 
-        // 2. Positioning
-        if (result.name === "Positioning...") {
+        // 2. Succès
+        if (result.verified) {
             return {
-                color: '#FFA500',
-                title: 'Position your face',
-                subtitle: 'Center in the circle',
-                icon: 'scan'
+                color: '#10B981', // Green
+                title: `Bienvenue ${result.name.split(' ')[0]}`,
+                subtitle: 'Pointage enregistré / تم تسجيل الدخول'
             };
         }
 
-        // 3. Unknown
+        // 3. Confiance Faible
+        if (result.confidence > 0 && result.confidence <= 0.85) {
+            return {
+                color: '#F59E0B', // Amber
+                title: 'Confiance Faible / ثقة منخفضة',
+                subtitle: 'Approchez-vous / اقترب أكثر'
+            };
+        }
+
+        // 4. Visage Inconnu
         if (result.name === "Unknown") {
             return {
-                color: '#EF4444',
-                title: 'Visage Inconnu',
-                subtitle: 'Non reconnu',
-                icon: 'alert'
+                color: '#EF4444', // Red
+                title: 'Visage Inconnu / وجه غير معروف',
+                subtitle: 'Non autorisé / غير مصرح'
             };
         }
 
-        // 4. Low Confidence
-        if (result.confidence < 0.85) {
-            return {
-                color: '#EF4444',
-                title: 'Précision Faible',
-                subtitle: `${(result.confidence * 100).toFixed(0)}%`,
-                icon: 'alert'
-            };
-        }
-
-        // 5. Success
-        return {
-            color: '#10B981',
-            title: result.name,
-            subtitle: `Précision: ${(result.confidence * 100).toFixed(0)}%`,
-            icon: 'check'
-        };
+        return null;
     };
 
     const overlay = getOverlayStyle();
@@ -253,9 +243,12 @@ const Kiosk = () => {
 
                 {/* Overlay UI */}
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    {/* Positioning Guide */}
-                    <div className="absolute w-[60vw] h-[60vw] md:w-[40vh] md:h-[40vh] border-4 border-white/30 rounded-full">
+                    {/* Positioning Guide - Enlarged by 25% (60vw->75vw, 40vh->50vh) */}
+                    <div className="absolute w-[75vw] h-[75vw] md:w-[50vh] md:h-[50vh] border-4 border-white/30 rounded-full transition-all duration-500">
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 text-cyan-400/50">+</div>
+                        <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 text-white/50 text-sm whitespace-nowrap font-cairo">
+                            Positionnez votre visage / ضع وجهك في الإطار
+                        </div>
                     </div>
 
                     {/* Status Message */}
@@ -265,8 +258,8 @@ const Kiosk = () => {
                                 style={{ backgroundColor: overlay.color }}
                                 className="px-8 py-4 rounded-2xl shadow-2xl text-white text-center min-w-[300px]"
                             >
-                                <h2 className="text-3xl font-bold mb-1">{overlay.title}</h2>
-                                <p className="text-lg opacity-90">{overlay.subtitle}</p>
+                                <h2 className="text-3xl font-bold mb-1 font-cairo">{overlay.title}</h2>
+                                <p className="text-lg opacity-90 font-cairo">{overlay.subtitle}</p>
                             </div>
                         </div>
                     )}

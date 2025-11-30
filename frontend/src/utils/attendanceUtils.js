@@ -22,30 +22,30 @@ export const parseAttendanceResponse = (data) => {
 
         // Analyse du message d'erreur (Miroir du backend)
         if (msg.includes("entrées sont autorisées uniquement entre")) {
-            blockReason = "Heure Entrée Dépassée";
-            blockSubtext = "Entrée: 03h00-13h30";
+            blockReason = "Heure Entrée Dépassée / وقت الدخول انتهى";
+            blockSubtext = "Entrée: 03h00-13h30 / الدخول: 03:00-13:30";
             color = "#FF0000"; // Rouge
         }
         else if (msg.includes("sorties sont autorisées uniquement entre")) {
-            blockReason = "Heure Sortie Dépassée";
-            blockSubtext = "Sortie: 12h00-23h59";
+            blockReason = "Heure Sortie Dépassée / وقت الخروج انتهى";
+            blockSubtext = "Sortie: 12h00-23h59 / الخروج: 12:00-23:59";
             color = "#FF0000"; // Rouge
         }
         else if (msg.toLowerCase().includes("attendre") && msg.toLowerCase().includes("minutes")) {
-            blockReason = "Temps de Travail minimum non achevé";
+            blockReason = "Temps minimum non achevé / الحد الأدنى للعمل لم يكتمل";
             color = "#FFA500"; // Orange
 
             // Extraire les minutes si possible
             const match = msg.match(/(\d+)\s+minutes/);
             if (match) {
-                blockSubtext = `Attendre ${match[1]} minutes`;
+                blockSubtext = `Attendre ${match[1]} minutes / انتظر ${match[1]} دقائق`;
             } else {
-                blockSubtext = "Attendre quelques minutes";
+                blockSubtext = "Attendre quelques minutes / انتظر بضع دقائق";
             }
         }
         else if (msg.toLowerCase().includes("déjà enregistré")) {
-            blockReason = "Detection Déjà Effectué";
-            blockSubtext = "1 entrée/sortie max";
+            blockReason = "Déjà enregistré / تم التسجيل مسبقاً";
+            blockSubtext = "1 entrée/sortie max / تسجيل واحد كحد أقصى";
             color = "#0099FF"; // Bleu
         }
 

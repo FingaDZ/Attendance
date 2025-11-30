@@ -633,6 +633,8 @@ def check_time_constraints(log_type: str) -> tuple[bool, str]:
 def check_attendance_status(employee_id: int, db: Session) -> tuple[str | None, str | None]:
     """Determine if next log should be ENTRY or EXIT
     
+    v2.10.0: Allow EXIT without ENTRY during standard hours
+    
     Returns:
         (log_type, error_message)
     """
@@ -646,17 +648,35 @@ def check_attendance_status(employee_id: int, db: Session) -> tuple[str | None, 
     entry_logs = [log for log in logs if log.type == 'ENTRY']
     exit_logs = [log for log in logs if log.type == 'EXIT']
 
+    # Cas 1: Déjà ENTRY + EXIT → Bloquer
     if len(entry_logs) >= 1 and len(exit_logs) >= 1:
         print(f"Blocked: Already has ENTRY and EXIT for today.")
         return None, "Vous avez déjà enregistré une entrée et une sortie aujourd'hui."
 
+    # Cas 2: Aucune ENTRY
     if len(entry_logs) == 0:
-        # Vérifier contrainte horaire pour ENTRY
-        is_valid, error_msg = check_time_constraints('ENTRY')
-        if not is_valid:
-            return None, error_msg
-        return 'ENTRY', None
+        # Sous-cas 2a: Aucune SORTIE → Permettre ENTRY ou EXIT
+        if len(exit_logs) == 0:
+            # Vérifier contrainte horaire pour ENTRY
+            is_valid_entry, error_msg_entry = check_time_constraints('ENTRY')
+            if is_valid_entry:
+                return 'ENTRY', None
+            
+            # v2.10.0: Si hors heures ENTRY, permettre EXIT si dans heures EXIT
+            is_valid_exit, error_msg_exit = check_time_constraints('EXIT')
+            if is_valid_exit:
+                print(f"Flexible Exit: Allowing EXIT without ENTRY (within EXIT hours)")
+                return 'EXIT', None
+            
+            # Hors de toutes les heures standard
+            return None, "Hors des heures standard d'entrée et de sortie."
+        
+        # Sous-cas 2b: Déjà SORTIE sans ENTRÉE → Bloquer
+        else:
+            print(f"Blocked: EXIT already logged without ENTRY.")
+            return None, "Sortie déjà enregistrée aujourd'hui."
 
+    # Cas 3: ENTRY existe, pas de SORTIE
     if len(entry_logs) == 1 and len(exit_logs) == 0:
         # Check cooldown (4 hours = 14400 seconds)
         last_log = logs[-1]

@@ -210,7 +210,7 @@ const PinPanel = ({ onAuthSuccess }) => {
             </div>
 
             <div className="mt-2 md:mt-8 text-center text-gray-600 text-[10px] md:text-xs">
-                Mode Kiosque Sécurisé v2.9.0
+                Mode Kiosque Sécurisé v2.10.0
             </div>
         </div>
     );

@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -45,7 +45,7 @@ def migrate_database_schema():
         with engine.connect() as conn:
             for col in missing_columns:
                 try:
-                    conn.execute(f"ALTER TABLE employees ADD COLUMN {col} BLOB")
+                    conn.execute(text(f"ALTER TABLE employees ADD COLUMN {col} BLOB"))
                     conn.commit()
                     print(f"  ✓ Added column: {col}")
                 except Exception as e:
@@ -56,7 +56,7 @@ def migrate_database_schema():
             if 'photo4' in missing_columns:
                 print("[Migration] Auto-duplicating existing employee photos...")
                 try:
-                    conn.execute("""
+                    conn.execute(text("""
                         UPDATE employees 
                         SET photo4 = photo1, 
                             photo5 = photo2, 
@@ -65,7 +65,7 @@ def migrate_database_schema():
                             embedding5 = embedding2,
                             embedding6 = embedding3
                         WHERE photo1 IS NOT NULL
-                    """)
+                    """))
                     conn.commit()
                     print("  ✓ Photos duplicated successfully")
                 except Exception as e:

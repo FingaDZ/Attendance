@@ -9,6 +9,7 @@ const playAttendanceSound = (logType) => {
 
     if (logType === 'EXIT') audioFile = '/fin.wav';
     else if (logType === 'ALREADY_LOGGED') audioFile = '/inok.wav';
+    else if (logType === 'EXIT_ALREADY_LOGGED') audioFile = '/exitok.wav';
     else if (logType === 'MIN_TIME') audioFile = '/mintime.wav';
 
     const audio = new Audio(audioFile);

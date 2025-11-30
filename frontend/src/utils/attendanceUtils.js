@@ -45,6 +45,12 @@ export const parseAttendanceResponse = (data) => {
                 blockSubtext = "Attendre quelques minutes / انتظر بضع دقائق";
             }
         }
+        else if (msg.toLowerCase().includes("sortie déjà enregistrée")) {
+            blockReason = "Sortie déjà enregistrée / تم تسجيل الخروج مسبقاً";
+            blockSubtext = "1 sortie max par jour / خروج واحد كحد أقصى";
+            color = "#0099FF"; // Bleu
+            sound = "EXIT_ALREADY_LOGGED"; // Trigger exitok.wav
+        }
         else if (msg.toLowerCase().includes("déjà enregistré")) {
             blockReason = "Déjà enregistré / تم التسجيل مسبقاً";
             blockSubtext = "1 entrée/sortie max / تسجيل واحد كحد أقصى";

@@ -28,6 +28,13 @@ class SmartAuthMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
 
+        path = request.url.path
+        # logger.info(f"SmartAuth Request: {request.method} {path} from {request.client.host}")
+
+        # Allow static assets and public files
+        if path.startswith("/assets") or path in ["/vite.svg", "/favicon.ico", "/manifest.json"]:
+            return await call_next(request)
+
         # Get Client IP
         client_ip = request.client.host
         # Handle headers from proxy (X-Forwarded-For)

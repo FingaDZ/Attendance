@@ -158,6 +158,7 @@ const Dashboard = () => {
             Employee: log.employee_name,
             Type: log.type,
             Camera: log.camera_id,
+            Photo: log.photo_capture ? "Verifier" : "-",
             Confidence: (log.confidence * 100).toFixed(1) + '%',
             WorkedHours: formatWorkedTime(log.worked_minutes)
         })));
@@ -173,6 +174,7 @@ const Dashboard = () => {
             Employee: log.employee_name,
             Type: log.type,
             Camera: log.camera_id,
+            Photo: log.photo_capture ? "Verifier" : "-",
             Confidence: (log.confidence * 100).toFixed(1) + '%',
             WorkedHours: formatWorkedTime(log.worked_minutes)
         })));

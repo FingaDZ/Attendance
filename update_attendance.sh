@@ -5,7 +5,7 @@
 
 set -e
 
-echo "=== Attendance System Update v2.0.2 ==="
+echo "=== Attendance System Update ==="
 
 # Backup database
 echo "📦 Backing up database..."
@@ -73,7 +73,7 @@ sudo systemctl status attendance-backend --no-pager
 sudo systemctl status attendance-frontend --no-pager
 
 echo ""
-echo "=== Update Complete v2.0.2 ==="
+echo "=== Update Complete ==="
 echo "✅ Backend: Running"
 echo "✅ Frontend: Running"
 echo "🚀 CPU Optimizations: 2.5 FPS detection (60-70% CPU reduction)"

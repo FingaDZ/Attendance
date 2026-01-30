@@ -147,10 +147,20 @@ class CameraService:
             return buffer.tobytes()
         return None
 
-    def initialize_cameras_from_db(self):
+    def initialize_cameras_from_db(self, skip_local=False):
+        """Initialize cameras from database.
+        
+        Args:
+            skip_local: If True, skip local webcams (source 0,1,2) to allow
+                       browser getUserMedia() access in Kiosk mode.
+        """
         db = SessionLocal()
         cameras = db.query(Camera).filter(Camera.is_active == 1).all()
         for cam in cameras:
+            # Skip local webcam sources if requested
+            if skip_local and str(cam.source).isdigit() and int(cam.source) < 10:
+                print(f"Skipping local camera {cam.id} (source {cam.source}) - use browser camera instead")
+                continue
             self.start_camera(cam.id, cam.source)
         db.close()
 

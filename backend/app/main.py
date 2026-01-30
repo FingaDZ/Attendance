@@ -52,18 +52,10 @@ async def startup_event():
     # ensemble_service.initialize(db)
     
     # Initialize cameras
-    # Check if we have any cameras, if not add the default webcam
-    cam_count = db.query(Camera).count()
-    if cam_count == 0:
-        default_cam = Camera(
-            name="Webcam", 
-            source="0"
-        )
-        db.add(default_cam)
-        db.commit()
-        logger.info("Added default webcam.")
-    
-    camera_service.initialize_cameras_from_db()
+    # NOTE: Local webcams (source 0,1,2) are NOT auto-initialized
+    # to allow browser getUserMedia() access in Kiosk mode.
+    # Only RTSP/IP cameras are auto-started.
+    camera_service.initialize_cameras_from_db(skip_local=True)
     db.close()
     
     # Start automatic log cleanup scheduler

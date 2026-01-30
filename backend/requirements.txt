@@ -3,7 +3,7 @@ uvicorn
 insightface
 onnxruntime
 opencv-python<4.10
-numpy
+numpy<2
 sqlalchemy
 python-multipart
 pillow

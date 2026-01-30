@@ -124,12 +124,19 @@ if %errorLevel% neq 0 (
     echo  [!] NOTE: InsightFace requires Python 3.10 or 3.11 (NOT 3.12+)
     echo.
     winget install Python.Python.3.11 --silent --accept-package-agreements --accept-source-agreements
+    
+    REM Refresh PATH and recheck
+    set "PATH=%PATH%;%LOCALAPPDATA%\Programs\Python\Python311;%LOCALAPPDATA%\Programs\Python\Python311\Scripts"
+    
+    py -3.11 --version >nul 2>&1
     if %errorLevel% neq 0 (
-        call :error "Python 3.11 installation failed. Please install manually from https://python.org"
+        echo  [!] Python 3.11 not detected after install.
+        echo  [!] Please restart this script or install Python 3.11 manually.
+        echo  [!] Download: https://www.python.org/downloads/release/python-3119/
+        pause
+        exit /b 0
     )
-    echo  [OK] Python 3.11 installed. Please restart this script.
-    pause
-    exit /b 0
+    echo  [OK] Python 3.11 installed successfully.
 ) else (
     for /f "tokens=2" %%v in ('py -3.11 --version 2^>^&1') do echo  [OK] Python 3.11: %%v
 )
@@ -142,12 +149,19 @@ if %errorLevel% neq 0 (
     call :progress 15 "Installing Node.js..."
     echo  [!] Node.js not found. Installing via winget...
     winget install OpenJS.NodeJS.LTS --silent --accept-package-agreements --accept-source-agreements
+    
+    REM Refresh PATH and recheck
+    set "PATH=%PATH%;C:\Program Files\nodejs"
+    
+    node --version >nul 2>&1
     if %errorLevel% neq 0 (
-        call :error "Node.js installation failed. Please install manually from https://nodejs.org"
+        echo  [!] Node.js not detected after install.
+        echo  [!] Please restart this script or install Node.js manually.
+        echo  [!] Download: https://nodejs.org
+        pause
+        exit /b 0
     )
-    echo  [OK] Node.js installed. Please restart this script.
-    pause
-    exit /b 0
+    echo  [OK] Node.js installed successfully.
 ) else (
     for /f %%v in ('node --version 2^>^&1') do echo  [OK] Node.js: %%v
 )

@@ -41,12 +41,53 @@ if %errorLevel% neq 0 (
     call :error "This script requires Administrator privileges. Right-click and select 'Run as Administrator'"
 )
 
+REM === CHECK INTERNET CONNECTIVITY ===
+echo  [*] Checking internet connection...
+ping -n 1 github.com >nul 2>&1
+if %errorLevel% neq 0 (
+    ping -n 1 8.8.8.8 >nul 2>&1
+    if %errorLevel% neq 0 (
+        call :error "No internet connection. Please check your network and try again."
+    )
+)
+echo  [OK] Internet connection OK
+echo.
+
 REM === DEFINE INSTALL PATH ===
 set "INSTALL_PATH=C:\Attendance"
 set "REPO_URL=https://github.com/FingaDZ/Attendance.git"
 
 echo  Install Path: %INSTALL_PATH%
 echo  Repository:   %REPO_URL%
+echo.
+
+REM === CHECK DISK SPACE ===
+echo  [*] Checking disk space...
+for /f "tokens=3" %%a in ('dir C:\ ^| findstr /C:"bytes free"') do set "FREE_SPACE=%%a"
+set "FREE_SPACE=%FREE_SPACE:,=%"
+REM Need at least 2GB (2147483648 bytes)
+powershell -Command "if ([int64]'%FREE_SPACE%' -lt 2147483648) { exit 1 }" >nul 2>&1
+if %errorLevel% neq 0 (
+    echo  [!] WARNING: Less than 2GB free space on C: drive.
+    echo  [!] Installation may fail. Recommended: 5GB+ free space.
+    echo.
+    set /p CONTINUE_LOW_SPACE="Continue anyway? (Y/N): "
+    if /i not "!CONTINUE_LOW_SPACE!"=="Y" (
+        call :error "Not enough disk space. Please free up space and try again."
+    )
+)
+echo  [OK] Disk space OK
+
+REM === CONFIGURE FIREWALL ===
+echo  [*] Configuring firewall for port 8000...
+netsh advfirewall firewall show rule name="Attendance System" >nul 2>&1
+if %errorLevel% neq 0 (
+    netsh advfirewall firewall add rule name="Attendance System" dir=in action=allow protocol=TCP localport=8000 >nul 2>&1
+    echo  [OK] Firewall rule added for port 8000
+) else (
+    echo  [OK] Firewall rule already exists
+)
+
 echo.
 
 REM ══════════════════════════════════════════════════════════

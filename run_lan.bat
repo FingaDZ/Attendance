@@ -1,16 +1,39 @@
 @echo off
-echo Starting Attendance System for LAN Access (HTTPS)...
-echo Local IP: 192.168.66.102
+setlocal enabledelayedexpansion
+
+echo ========================================
+echo   Attendance System - LAN Access Mode
+echo ========================================
 echo.
-echo Starting Backend...
-start "Backend" cmd /k "cd backend && venv\Scripts\activate && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
+
+REM === AUTO-DETECT LOCAL IP ===
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
+    for /f "tokens=1" %%b in ("%%a") do set LOCAL_IP=%%b
+)
+set LOCAL_IP=%LOCAL_IP: =%
+
+echo Detected IP: %LOCAL_IP%
 echo.
-echo Starting Frontend (HTTPS)...
-start "Frontend" cmd /k "cd frontend && npm run dev"
+
+REM === START BACKEND ===
+echo Starting Backend Server...
+start "Attendance Backend" cmd /k "cd /d %~dp0backend && venv\Scripts\python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+timeout /t 5 /nobreak >nul
+
 echo.
-echo Access the app at: https://192.168.66.102:5173
+echo ========================================
+echo   Access the application at:
 echo.
-echo IMPORTANT: You will see a "Not Secure" warning.
-echo Click "Advanced" -> "Proceed to..." to access the site.
-echo This is required for camera access on mobile.
+echo   Dashboard: http://%LOCAL_IP%:8000
+echo   Kiosk:     http://%LOCAL_IP%:8000/kiosk
+echo   API:       http://%LOCAL_IP%:8000/docs
+echo.
+echo   CAMERA NOTE:
+echo   Camera access requires HTTPS or Chrome flag.
+echo   On client devices, open:
+echo   chrome://flags/#unsafely-treat-insecure-origin-as-secure
+echo   Add: http://%LOCAL_IP%:8000
+echo ========================================
+echo.
 pause

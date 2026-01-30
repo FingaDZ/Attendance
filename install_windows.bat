@@ -29,22 +29,25 @@ REM ========================================
 echo [1/6] Checking prerequisites...
 echo.
 
-REM --- Check Python ---
-python --version >nul 2>&1
+REM --- Check Python 3.11 (InsightFace requires 3.10 or 3.11) ---
+py -3.11 --version >nul 2>&1
 if %errorLevel% neq 0 (
-    echo   Python not found. Installing via winget...
+    echo   Python 3.11 not found. Installing via winget...
+    echo.
+    echo   NOTE: InsightFace is NOT compatible with Python 3.12 or 3.13!
+    echo.
     winget install Python.Python.3.11 --silent --accept-package-agreements --accept-source-agreements
     if %errorLevel% neq 0 (
-        echo   ERROR: Python installation failed.
+        echo   ERROR: Python 3.11 installation failed.
         echo   Please install Python 3.11 manually from https://python.org
         pause
         exit /b 1
     )
-    echo   Python installed. Please restart this script.
+    echo   Python 3.11 installed. Please restart this script.
     pause
     exit /b 0
 ) else (
-    for /f "tokens=2" %%v in ('python --version 2^>^&1') do echo   Python: %%v OK
+    for /f "tokens=2" %%v in ('py -3.11 --version 2^>^&1') do echo   Python 3.11: %%v OK
 )
 
 REM --- Check Node.js ---
@@ -121,8 +124,8 @@ echo [3/6] Setting up Backend...
 cd /d "%INSTALL_PATH%\backend"
 
 if not exist "venv" (
-    echo   Creating virtual environment...
-    python -m venv venv
+    echo   Creating virtual environment with Python 3.11...
+    py -3.11 -m venv venv
 )
 
 echo   Installing Python dependencies...

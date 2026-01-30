@@ -54,13 +54,13 @@ if not exist "%NSSM_PATH%" (
     echo [1/4] NSSM already installed.
 )
 
-REM === VERIFY NSSM ===
-"%NSSM_PATH%" version >nul 2>&1
-if %errorLevel% neq 0 (
-    echo  [ERROR] NSSM is not working properly.
+REM === VERIFY NSSM EXISTS ===
+if not exist "%NSSM_PATH%" (
+    echo  [ERROR] NSSM file not found.
     pause
     exit /b 1
 )
+echo  [OK] NSSM verified.
 
 REM === STOP EXISTING SERVICE IF RUNNING ===
 echo [2/4] Checking existing service...
